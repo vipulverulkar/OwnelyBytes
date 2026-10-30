@@ -5,45 +5,22 @@
 
 ---
 
-## 📸 Menu Analysis & Digitization
+## 🧁 Dynamic Menu & Product Catalog Architecture
 
-The app comes pre-populated with the exact menu extracted from the official **Ovenly Bites** catalog:
+The application provides a fully dynamic, database-driven menu catalog powered by **SQLite (Room Database)**. Menu categories, items, pricing tiers, and availability can be managed, edited, or expanded dynamically in real time without modifying application code.
 
-| Category | Item Name | Variant 1 | Price 1 (₹) | Variant 2 | Price 2 (₹) |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Classic Cakes** | Vanilla Cake | ½ KG | ₹550 | 1 KG | ₹950 |
-| **Classic Cakes** | Pineapple Cake | ½ KG | ₹600 | 1 KG | ₹1,050 |
-| **Classic Cakes** | Black Forest Cake | ½ KG | ₹600 | 1 KG | ₹1,050 |
-| **Classic Cakes** | Butterscotch Cake | ½ KG | ₹600 | 1 KG | ₹1,100 |
-| **Classic Cakes** | Strawberry Cake | ½ KG | ₹600 | 1 KG | ₹1,050 |
-| **Classic Cakes** | Red Velvet Cake | ½ KG | ₹700 | 1 KG | ₹1,250 |
-| **Classic Cakes** | Blueberry Cake | ½ KG | ₹650 | 1 KG | ₹1,200 |
-| **Classic Cakes** | Mango Cake (Seasonal) | ½ KG | *Market Rate* | 1 KG | *Market Rate* |
-| **Classic Cakes** | Fresh Fruit Cake | ½ KG | *Market Rate* | 1 KG | *Market Rate* |
-| **Premium Collection** | Rasmalai Cake | ½ KG | ₹800 | 1 KG | ₹1,500 |
-| **Premium Collection** | Chocolate Truffle Cake | ½ KG | ₹750 | 1 KG | ₹1,400 |
-| **Premium Collection** | Biscoff Chocolate Cake | ½ KG | ₹800 | 1 KG | ₹1,500 |
-| **Premium Collection** | Nutella Cake | ½ KG | ₹800 | 1 KG | ₹1,500 |
-| **Premium Collection** | Chocolate Truffle with Whipped Caramel | ½ KG | ₹750 | 1 KG | ₹1,400 |
-| **Premium Collection** | Tiramisu Cake | ½ KG | ₹750 | 1 KG | ₹1,400 |
-| **Brownies** | Classic Fudgy Brownie | 250 g | ₹270 | 500 g | ₹500 |
-| **Brownies** | Nutella Brownie | 250 g | ₹350 | 500 g | ₹600 |
-| **Brownies** | Whole Wheat Walnut Brownie | 250 g | ₹350 | 500 g | ₹600 |
-| **Brownies** | Mocha Brownie | 250 g | ₹280 | 500 g | ₹500 |
-| **Tea Cakes** | Kesar Badam Tea Cake | 250 g | ₹300 | 500 g | ₹550 |
-| **Tea Cakes** | Honey Oats Tea Cake | 250 g | ₹300 | 500 g | ₹550 |
-| **Tea Cakes** | Pan Bahar Tea Cake | 250 g | ₹250 | 500 g | ₹450 |
-| **Tea Cakes** | Marble Tea Cake | 250 g | ₹250 | 500 g | ₹400 |
-| **Tea Cakes** | Whole Wheat Chocolate Walnut Tea Cake | 250 g | ₹250 | 500 g | ₹450 |
-| **Cookies** | Oats & Almond Cookies | 250 g | ₹350 | 500 g | ₹650 |
-| **Cookies** | Multigrain Cookies | 250 g | ₹300 | 500 g | ₹550 |
-| **Cookies** | Choco Chip Cookies | 250 g | ₹300 | 500 g | ₹550 |
-| **Cookies** | Karachi Biscuits | 250 g | ₹200 | 500 g | ₹350 |
+### Supported Product Categories:
+- **Classic Cakes**: Multi-tier weight variations (e.g., ½ KG, 1 KG), support for standard and seasonal rate items.
+- **Premium Collection**: High-end fusion and chocolate cakes with configurable tier pricing.
+- **Brownies**: Portion-based packaging (e.g., 250 g, 500 g).
+- **Tea Cakes**: Loaf cake portion options with dietary notes.
+- **Cookies**: Weight-based cookie boxes and tins.
+- **Custom / Seasonal**: Dynamic market-rate pricing (e.g., Mango, Fresh Fruit, themed custom orders).
 
-### Bakery Rules Enforced:
-1. **100% Eggless Assurance**: Highlighted on all screens and WhatsApp receipts.
-2. **Order 2 Days Before**: Automated alert banner when scheduling deliveries within 48 hours.
-3. **Cake Customization Charge**: Dedicated extra fee and note capture for cake messages and bespoke decorations.
+### Configurable Bakery Rules & Policies:
+1. **100% Eggless Assurance**: Global bakery standard highlighted across all UI views and WhatsApp receipts.
+2. **Advance Notice Period**: Dynamic scheduling validation (e.g., automated warning alert when order lead time is under 48 hours).
+3. **Customization & Design Fee**: Dedicated dynamic charge and design note capture for custom decorations, cake messages, and toppers.
 
 ---
 
@@ -59,9 +36,9 @@ The app comes pre-populated with the exact menu extracted from the official **Ov
 - **One-Tap Native Phone Dialer**: Instant call to customer from order card or customer directory.
 
 ### 2. Standalone Offline SQLite Database (Room 2.6)
-- **Zero Cloud Dependence**: 100% standalone, works offline.
-- Pre-populated on first install with full menu, starter inventory, and sample orders.
-- Full ACID transactions for order items and financial tracking.
+- **Zero Cloud Dependence**: 100% standalone, runs completely offline on-device.
+- **Dynamic Data Models**: Stores and dynamically updates menus, inventory, customers, and orders.
+- **ACID Transactions**: Full transactional safety for order itemization and financial balance calculations.
 
 ### 3. Customer Management (CRM)
 - Customer profiles with name, phone number, delivery address, and dietary notes.
@@ -94,7 +71,7 @@ flowchart TD
         DetailUI["OrderDetailScreen\n(Lifecycle Stepper)"]
         CustomerUI["CustomerListScreen\n(CRM Directory)"]
         InventoryUI["InventoryScreen\n(Stock & Restock)"]
-        MenuUI["MenuCatalogScreen\n(28 Digitized Items)"]
+        MenuUI["MenuCatalogScreen\n(Dynamic Menu Catalog)"]
     end
 
     subgraph ViewModels["🧠 ViewModel Layer (StateFlow & Coroutines)"]
@@ -281,7 +258,7 @@ sequenceDiagram
     UI->>VM: createOrder(customer, order, items)
     VM->>Repo: createOrder(...)
     Repo->>DB: @Transaction INSERT Customer, Order, OrderItems
-    DB-->>Repo: Returns orderId (#OB-1001)
+    DB-->>Repo: Returns generated orderId (#OB-{id})
     Repo-->>VM: Success
     VM-->>UI: Complete
     UI->>WA: Launches Intent with pre-filled receipt text
@@ -297,7 +274,7 @@ sequenceDiagram
 | **Clean MVVM** | UI observers `StateFlow` emitted by ViewModels; ViewModels hold no UI references. | Complete testability and separation of concerns. |
 | **Reactive Repository** | `BakeryRepository` combines Room DAOs using Kotlin `Flow.combine`. | Real-time UI updates whenever orders or inventory change. |
 | **ACID Transactions** | Room `@Transaction` for atomic order insertion and line-item creation. | Zero risk of orphaned items or partial order records. |
-| **Offline-First** | SQLite database pre-seeded on first run (`RoomDatabase.Callback`). | Fully operational without internet connectivity. |
+| **Offline-First** | Standalone SQLite database engine with reactive Room DAOs and Flows. | Fully operational on-device without internet connectivity. |
 | **Material 3 Theming** | Artisan color tokens: Cocoa `#4A2518`, Rose Coral `#B85D43`, Cream `#FFFBF5`. | Distinctive, branded bakery aesthetic. |
 
 ---
@@ -339,7 +316,7 @@ OvenlyBytes/
 ## 📱 How to Run in Android Studio
 
 1. Open **Android Studio** (Ladybug / Koala / Hedgehog or newer).
-2. Click **Open** and select `/home/vipul/Documents/Code/OvenlyBytes`.
+2. Click **Open** and select the root project directory (`OvenlyBytes`).
 3. Android Studio will automatically recognize the Gradle build, download dependencies, and index the project.
 4. Select an Android Emulator or connected physical device (Android 7.0 / API 24+).
 5. Click the green **Run (▶)** button!
