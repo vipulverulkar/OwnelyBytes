@@ -80,13 +80,225 @@ The app comes pre-populated with the exact menu extracted from the official **Ov
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## 🛠️ Tech Stack & System Architecture
 
-- **Language**: Kotlin 2.0 (Google's recommended standard for modern Android)
-- **UI Toolkit**: Jetpack Compose with Material Design 3
-- **Database**: SQLite via Android Room 2.6.1 (with Kotlin Coroutines & Flow)
-- **Architecture**: Clean MVVM (Model - View - ViewModel) + Repository Pattern
-- **Navigation**: Jetpack Compose Navigation (Bottom Navigation Bar)
+### 1. High-Level Architecture Diagram (MVVM + Offline-First SQLite)
+
+The application follows Google's recommended modern Android architecture guidelines using **Unidirectional Data Flow (UDF)**, clean separation of concerns, and 100% offline persistence.
+
+```mermaid
+flowchart TD
+    subgraph Presentation["🎨 Presentation Layer (Jetpack Compose & Material 3)"]
+        DashboardUI["DashboardScreen\n(KPIs & Due Orders)"]
+        OrdersUI["OrdersListScreen &\nCreateOrderScreen"]
+        DetailUI["OrderDetailScreen\n(Lifecycle Stepper)"]
+        CustomerUI["CustomerListScreen\n(CRM Directory)"]
+        InventoryUI["InventoryScreen\n(Stock & Restock)"]
+        MenuUI["MenuCatalogScreen\n(28 Digitized Items)"]
+    end
+
+    subgraph ViewModels["🧠 ViewModel Layer (StateFlow & Coroutines)"]
+        DVM["DashboardViewModel"]
+        OVM["OrdersViewModel"]
+        CVM["CustomerViewModel"]
+        IVM["InventoryViewModel"]
+        MVM["MenuViewModel"]
+    end
+
+    subgraph Repository["📦 Domain & Repository Layer"]
+        Repo["BakeryRepository\n(Data aggregation, KPI calculations, flow combines)"]
+    end
+
+    subgraph LocalStorage["💾 Persistence Layer (Standalone SQLite / Room 2.6)"]
+        DB[("OvenlyDatabase\n(Room SQLite Engine)")]
+        ODao["OrderDao (@Transaction)"]
+        CDao["CustomerDao"]
+        IDao["InventoryDao"]
+        MDao["MenuItemDao"]
+    end
+
+    subgraph SystemIntents["📱 External Communication Layer"]
+        WA["WhatsApp Messenger\n(wa.me API via ACTION_VIEW)"]
+        Dialer["Native Phone Dialer\n(ACTION_DIAL)"]
+    end
+
+    DashboardUI --> DVM
+    OrdersUI --> OVM
+    DetailUI --> OVM
+    CustomerUI --> CVM
+    InventoryUI --> IVM
+    MenuUI --> MVM
+
+    DVM --> Repo
+    OVM --> Repo
+    CVM --> Repo
+    IVM --> Repo
+    MVM --> Repo
+
+    Repo --> ODao
+    Repo --> CDao
+    Repo --> IDao
+    Repo --> MDao
+
+    ODao --> DB
+    CDao --> DB
+    IDao --> DB
+    MDao --> DB
+
+    DetailUI -.-> WA
+    OrdersUI -.-> WA
+    CustomerUI -.-> WA
+    DetailUI -.-> Dialer
+    CustomerUI -.-> Dialer
+```
+
+---
+
+### 2. SQLite Database Schema & Entity Relationships
+
+The on-device SQLite database manages relational entities with cascading foreign keys:
+
+```mermaid
+erDiagram
+    CUSTOMERS ||--o{ ORDERS : "places (1:N)"
+    ORDERS ||--|{ ORDER_ITEMS : "contains (1:N)"
+    MENU_ITEMS ||--o{ ORDER_ITEMS : "categorizes"
+    INVENTORY
+
+    CUSTOMERS {
+        int id PK "autoGenerate"
+        string name "Customer Full Name"
+        string phone "WhatsApp / Contact Phone"
+        string email "Optional Email"
+        string address "Delivery Address / Landmark"
+        string notes "Dietary & sweetness preferences"
+        long createdAt "Timestamp"
+    }
+
+    ORDERS {
+        int id PK "autoGenerate (#OB-xxxx)"
+        int customerId FK "References CUSTOMERS(id) ON DELETE CASCADE"
+        string orderSource "WHATSAPP | PHONE | WALK_IN"
+        string orderStatus "RECEIVED | BAKING | READY | OUT_FOR_DELIVERY | DELIVERED"
+        long orderDate "Booking Date"
+        long deliveryDate "Scheduled Delivery Date"
+        string deliveryTimeSlot "e.g. 5:00 PM - 7:00 PM"
+        string cakeMessage "Piped message on cake"
+        string customizationNotes "Design & special instructions"
+        double customizationCharge "Custom cake decoration extra"
+        double discount "Promotional discount"
+        double subtotal "Sum of ordered items"
+        double totalAmount "Subtotal + Customization - Discount"
+        double advancePaid "Advance collected"
+        double balanceDue "Outstanding amount"
+        string paymentMode "UPI | CASH | CARD"
+        string paymentStatus "PENDING | PARTIAL | COMPLETED"
+        long createdAt "Timestamp"
+    }
+
+    ORDER_ITEMS {
+        int id PK "autoGenerate"
+        int orderId FK "References ORDERS(id) ON DELETE CASCADE"
+        int menuItemId FK "References MENU_ITEMS(id)"
+        string itemName "e.g. Biscoff Chocolate Cake"
+        string category "e.g. Premium Collection"
+        string variantName "½ KG | 1 KG | 250 g | 500 g"
+        double unitPrice "Variant price"
+        int quantity "Number of units"
+        double itemTotal "unitPrice * quantity"
+    }
+
+    MENU_ITEMS {
+        int id PK "autoGenerate"
+        string name "Item Name"
+        string category "CLASSIC_CAKES | PREMIUM | BROWNIES | TEA_CAKES | COOKIES"
+        string description "Item description & eggless assurance"
+        boolean isEggless "true (100% Eggless)"
+        string size1Name "½ KG or 250 g"
+        double price1 "Price for size 1"
+        string size2Name "1 KG or 500 g"
+        double price2 "Price for size 2"
+        boolean isSeasonalRate "true for Mango & Fresh Fruit"
+        boolean isAvailable "In-stock toggle"
+    }
+
+    INVENTORY {
+        int id PK "autoGenerate"
+        string itemName "Ingredient / Box name"
+        string category "INGREDIENTS | DAIRY | TOPPINGS | PACKAGING"
+        double currentQuantity "Current physical stock"
+        string unit "kg | liters | pcs | boxes"
+        double minThreshold "Low-stock trigger level"
+        double costPerUnit "Cost price per unit"
+        long lastUpdated "Timestamp"
+    }
+```
+
+---
+
+### 3. Order Lifecycle & Status Workflow
+
+```mermaid
+stateDiagram-v2
+    [*] --> RECEIVED : Customer calls or messages via WhatsApp
+    RECEIVED --> BAKING : Baker taps "Mark Baking"
+    note right of BAKING : Optional: Send "Your Cake is Baking" WhatsApp update
+    BAKING --> READY : Cake baked, cooled & decorated
+    note right of READY : Optional: Send "Order Ready for Pickup" WhatsApp alert
+    READY --> OUT_FOR_DELIVERY : Handed to delivery driver
+    READY --> DELIVERED : Picked up in store
+    OUT_FOR_DELIVERY --> DELIVERED : Delivery completed & balance collected
+    DELIVERED --> [*]
+
+    RECEIVED --> CANCELLED : Customer cancelled
+    BAKING --> CANCELLED : Cancelled before dispatch
+    CANCELLED --> [*]
+```
+
+---
+
+### 4. End-to-End Order Creation & WhatsApp Confirmation Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Customer
+    actor Baker as Bakery Staff
+    participant UI as CreateOrderScreen
+    participant VM as OrdersViewModel
+    participant Repo as BakeryRepository
+    participant DB as SQLite (Room DB)
+    participant WA as WhatsApp App
+
+    Customer->>Baker: Calls or messages cake requirement on WhatsApp
+    Baker->>UI: Selects channel (WhatsApp / Phone)
+    Baker->>UI: Selects customer (or enters name, phone, address)
+    Baker->>UI: Picks items & variant (½ KG / 1 KG / 250g / 500g)
+    Baker->>UI: Enters custom cake message & extra charges
+    Baker->>UI: Selects delivery date (2-day notice checked)
+    Baker->>UI: Enters advance paid (Balance calculated automatically)
+    Baker->>UI: Taps "Save & Send WhatsApp Receipt"
+    UI->>VM: createOrder(customer, order, items)
+    VM->>Repo: createOrder(...)
+    Repo->>DB: @Transaction INSERT Customer, Order, OrderItems
+    DB-->>Repo: Returns orderId (#OB-1001)
+    Repo-->>VM: Success
+    VM-->>UI: Complete
+    UI->>WA: Launches Intent with pre-filled receipt text
+    WA-->>Customer: Delivers itemized confirmation & balance due
+```
+
+---
+
+### 5. Architectural Patterns Applied
+
+| Pattern / Component | Implementation Detail | Benefit |
+| :--- | :--- | :--- |
+| **Clean MVVM** | UI observers `StateFlow` emitted by ViewModels; ViewModels hold no UI references. | Complete testability and separation of concerns. |
+| **Reactive Repository** | `BakeryRepository` combines Room DAOs using Kotlin `Flow.combine`. | Real-time UI updates whenever orders or inventory change. |
+| **ACID Transactions** | Room `@Transaction` for atomic order insertion and line-item creation. | Zero risk of orphaned items or partial order records. |
+| **Offline-First** | SQLite database pre-seeded on first run (`RoomDatabase.Callback`). | Fully operational without internet connectivity. |
+| **Material 3 Theming** | Artisan color tokens: Cocoa `#4A2518`, Rose Coral `#B85D43`, Cream `#FFFBF5`. | Distinctive, branded bakery aesthetic. |
 
 ---
 
