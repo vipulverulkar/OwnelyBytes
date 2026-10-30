@@ -40,6 +40,7 @@ fun MenuCatalogScreen(
     val selectedCategory by viewModel.selectedCategory.collectAsState()
 
     var itemToEdit by remember { mutableStateOf<MenuItemEntity?>(null) }
+    var itemToDelete by remember { mutableStateOf<MenuItemEntity?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
     var currentPage by remember { mutableStateOf(0) }
 
@@ -172,6 +173,7 @@ fun MenuCatalogScreen(
                         MenuItemCard(
                             item = item,
                             onEditClick = { itemToEdit = item },
+                            onDeleteClick = { itemToDelete = item },
                             onToggleAvailability = { viewModel.toggleAvailability(item) }
                         )
                     }
@@ -245,6 +247,30 @@ fun MenuCatalogScreen(
         )
     }
 
+    // Delete Item Confirmation Dialog
+    if (itemToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { itemToDelete = null },
+            title = { Text("Delete Master Menu Item?") },
+            text = { Text("Are you sure you want to delete '${itemToDelete?.name}' from the master menu catalog?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteMenuItem(itemToDelete!!)
+                        itemToDelete = null
+                    }
+                ) {
+                    Text("Delete", color = BalanceDueColor, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { itemToDelete = null }) {
+                    Text("Cancel", color = TextSecondary)
+                }
+            }
+        )
+    }
+
     // Add New Menu Item Dialog
     if (showAddDialog) {
         AddNewMenuItemDialog(
@@ -261,6 +287,7 @@ fun MenuCatalogScreen(
 fun MenuItemCard(
     item: MenuItemEntity,
     onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     onToggleAvailability: () -> Unit
 ) {
     val iconConfig = remember(item.category, item.name) {
@@ -347,8 +374,16 @@ fun MenuItemCard(
                     IconButton(onClick = onEditClick, modifier = Modifier.size(32.dp)) {
                         Icon(
                             Icons.Default.Edit,
-                            contentDescription = "Edit Price",
+                            contentDescription = "Edit Item",
                             tint = TextSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    IconButton(onClick = onDeleteClick, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            Icons.Default.DeleteOutline,
+                            contentDescription = "Delete Item",
+                            tint = BalanceDueColor,
                             modifier = Modifier.size(18.dp)
                         )
                     }

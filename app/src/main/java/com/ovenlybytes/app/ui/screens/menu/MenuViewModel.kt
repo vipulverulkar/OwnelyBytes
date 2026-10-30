@@ -64,6 +64,12 @@ class MenuViewModel(
         }
     }
 
+    fun deleteMenuItem(item: MenuItemEntity) {
+        viewModelScope.launch {
+            repository.deleteMenuItem(item)
+        }
+    }
+
     class Factory(private val repository: BakeryRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

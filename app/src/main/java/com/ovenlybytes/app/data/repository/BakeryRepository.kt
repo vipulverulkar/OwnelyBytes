@@ -151,6 +151,9 @@ class BakeryRepository(
     suspend fun updateMenuItem(item: MenuItemEntity) =
         menuItemDao.updateMenuItem(item)
 
+    suspend fun deleteMenuItem(item: MenuItemEntity) =
+        menuItemDao.deleteMenuItem(item)
+
     suspend fun setMenuItemAvailability(id: Long, isAvailable: Boolean) =
         menuItemDao.setAvailability(id, isAvailable)
 

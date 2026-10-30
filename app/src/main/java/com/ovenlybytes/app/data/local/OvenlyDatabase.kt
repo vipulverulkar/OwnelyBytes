@@ -68,6 +68,19 @@ abstract class OvenlyDatabase : RoomDatabase() {
             }
         }
 
+        override fun onOpen(db: SupportSQLiteDatabase) {
+            super.onOpen(db)
+            INSTANCE?.let { database ->
+                scope.launch(Dispatchers.IO) {
+                    val menuItemDao = database.menuItemDao()
+                    val inventoryDao = database.inventoryDao()
+                    if (menuItemDao.getMenuItemCount() == 0 || inventoryDao.getInventoryCount() == 0) {
+                        populateInitialData(database)
+                    }
+                }
+            }
+        }
+
         private suspend fun populateInitialData(database: OvenlyDatabase) {
             val menuItemDao = database.menuItemDao()
             val inventoryDao = database.inventoryDao()
