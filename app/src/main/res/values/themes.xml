@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.OvenlyBytes" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">#5C2C1D</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">#FDFBF7</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+</resources>
+

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.65"
+        android:scaleY="0.65"
+        android:translateX="18.9"
+        android:translateY="18.9">
+        <!-- Cake / Bakery Silhouette -->
+        <path
+            android:fillColor="#FDFBF7"
+            android:pathData="M54,20 C42,20 38,30 38,34 C32,34 26,40 28,48 C28,54 34,58 38,58 L70,58 C74,58 80,54 80,48 C82,40 76,34 70,34 C70,30 66,20 54,20 Z" />
+        <path
+            android:fillColor="#C06048"
+            android:pathData="M30,62 L78,62 A4,4 0 0,1 82,66 L82,78 A4,4 0 0,1 78,82 L30,82 A4,4 0 0,1 26,78 L26,66 A4,4 0 0,1 30,62 Z" />
+        <path
+            android:fillColor="#F5DEB3"
+            android:pathData="M24,84 L84,84 A3,3 0 0,1 87,87 L87,90 A3,3 0 0,1 84,93 L24,93 A3,3 0 0,1 21,90 L21,87 A3,3 0 0,1 24,84 Z" />
+        <!-- Heart accent -->
+        <path
+            android:fillColor="#FF5252"
+            android:pathData="M54,46 C52,43 47,43 45,46 C43,49 45,53 54,58 C63,53 65,49 63,46 C61,43 56,43 54,46 Z" />
+    </group>
+</vector>
+

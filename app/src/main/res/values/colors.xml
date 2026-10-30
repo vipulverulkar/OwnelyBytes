@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Warm Artisan Bakery Palette -->
+    <color name="bakery_primary">#5C2C1D</color> <!-- Rich Truffle Cocoa -->
+    <color name="bakery_on_primary">#FFFFFF</color>
+    <color name="bakery_primary_container">#F5E8E2</color>
+    <color name="bakery_secondary">#C06048</color> <!-- Warm Rose Coral -->
+    <color name="bakery_tertiary">#B87333</color> <!-- Copper Caramel -->
+    <color name="bakery_background">#FDFBF7</color> <!-- Warm Cream -->
+    <color name="bakery_surface">#FFFFFF</color>
+    <color name="bakery_surface_variant">#F5EFE6</color>
+    <color name="bakery_eggless_green">#2E7D32</color>
+    <color name="bakery_whatsapp_green">#25D366</color>
+    <color name="bakery_phone_blue">#1976D2</color>
+</resources>
+
