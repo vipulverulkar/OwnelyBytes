@@ -27,7 +27,7 @@ Ovenly Bytes is designed for home bakers, artisan cake studios, and commercial b
 - **100% Offline Local Database**: All data is stored safely on your device using SQLite (Room DB).
 - **WhatsApp Integration**: Generate and send formatted receipts, invoice confirmations, baking updates, and pickup alerts in one tap.
 - **Multi-Format Backup**: Export and import your data anytime in **SQL (.sql)**, **CSV (.csv)**, or **JSON (.json)** format.
-- **Custom Themes**: Switch between 5 warm bakery color palettes.
+- **Custom Themes**: Switch between 8 bakery color palettes (Artisan Cocoa, Strawberry Shortcake, Honey Vanilla, Pistachio Matcha, Lemon Chiffon, Blueberry Macaron, Peach Cobbler, Dark Mocha).
 
 ---
 

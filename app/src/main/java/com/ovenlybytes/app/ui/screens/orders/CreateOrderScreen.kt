@@ -60,6 +60,8 @@ fun CreateOrderScreen(
     var customerName by remember { mutableStateOf("") }
     var customerPhone by remember { mutableStateOf("") }
     var customerAddress by remember { mutableStateOf("") }
+    var customerSearchQuery by remember { mutableStateOf("") }
+    var customerPage by remember { mutableStateOf(0) }
 
     // 3. Cart Items
     var cartItems by remember { mutableStateOf(listOf<OrderItemEntity>()) }
@@ -377,37 +379,144 @@ fun CreateOrderScreen(
                                 maxLines = 2
                             )
                         } else {
-                            // Dropdown/picker of existing customers
+                            // Searchable & Paginated Saved Customer Directory
                             if (existingCustomers.isEmpty()) {
                                 Text("No saved customers yet. Create a new one above.", color = TextMuted)
                             } else {
-                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    existingCustomers.forEach { cust ->
-                                        val isSelected = selectedExistingCustomer?.id == cust.id
-                                        Surface(
-                                            shape = RoundedCornerShape(10.dp),
-                                            color = if (isSelected) PrimaryCocoa.copy(alpha = 0.08f) else Color.Transparent,
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    // Search input for saved customers
+                                    OutlinedTextField(
+                                        value = customerSearchQuery,
+                                        onValueChange = {
+                                            customerSearchQuery = it
+                                            customerPage = 0 // Reset to first page on search
+                                        },
+                                        placeholder = { Text("Search client by name, phone or address...") },
+                                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                                        trailingIcon = {
+                                            if (customerSearchQuery.isNotBlank()) {
+                                                IconButton(onClick = {
+                                                    customerSearchQuery = ""
+                                                    customerPage = 0
+                                                }) {
+                                                    Icon(Icons.Default.Close, contentDescription = "Clear")
+                                                }
+                                            }
+                                        },
+                                        singleLine = true,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+
+                                    // Filtering & Pagination calculations
+                                    val filteredSavedCustomers = remember(existingCustomers, customerSearchQuery) {
+                                        if (customerSearchQuery.isBlank()) existingCustomers
+                                        else existingCustomers.filter {
+                                            it.name.contains(customerSearchQuery, ignoreCase = true) ||
+                                            it.phone.contains(customerSearchQuery, ignoreCase = true) ||
+                                            it.address.contains(customerSearchQuery, ignoreCase = true)
+                                        }
+                                    }
+
+                                    val pageSize = 5
+                                    val totalPages = maxOf(1, (filteredSavedCustomers.size + pageSize - 1) / pageSize)
+                                    val currentPage = customerPage.coerceIn(0, totalPages - 1)
+
+                                    val startIndex = currentPage * pageSize
+                                    val endIndex = minOf(startIndex + pageSize, filteredSavedCustomers.size)
+
+                                    val paginatedCustomers = remember(filteredSavedCustomers, currentPage) {
+                                        if (startIndex < filteredSavedCustomers.size) {
+                                            filteredSavedCustomers.subList(startIndex, endIndex)
+                                        } else emptyList()
+                                    }
+
+                                    if (filteredSavedCustomers.isEmpty()) {
+                                        Text(
+                                            "No saved clients match '$customerSearchQuery'",
+                                            color = TextMuted,
+                                            fontSize = 12.sp,
+                                            modifier = Modifier.padding(vertical = 8.dp)
+                                        )
+                                    } else {
+                                        // Customer Cards List (5 items per page)
+                                        paginatedCustomers.forEach { cust ->
+                                            val isSelected = selectedExistingCustomer?.id == cust.id
+                                            Surface(
+                                                shape = RoundedCornerShape(10.dp),
+                                                color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else Color.Transparent,
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clickable { selectedExistingCustomer = cust }
+                                                    .border(
+                                                        width = if (isSelected) 1.5.dp else 0.8.dp,
+                                                        color = if (isSelected) MaterialTheme.colorScheme.primary else WarmBorder,
+                                                        shape = RoundedCornerShape(10.dp)
+                                                    )
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.padding(10.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    RadioButton(
+                                                        selected = isSelected,
+                                                        onClick = { selectedExistingCustomer = cust }
+                                                    )
+                                                    Spacer(modifier = Modifier.width(6.dp))
+                                                    Column {
+                                                        Text(cust.name, fontWeight = FontWeight.Bold)
+                                                        Text("${cust.phone} • ${cust.address.take(30)}", fontSize = 11.sp, color = TextSecondary)
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // Pagination Navigation Bar
+                                        Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .clickable { selectedExistingCustomer = cust }
-                                                .border(
-                                                    width = if (isSelected) 1.5.dp else 0.8.dp,
-                                                    color = if (isSelected) PrimaryCocoa else WarmBorder,
-                                                    shape = RoundedCornerShape(10.dp)
-                                                )
+                                                .padding(top = 4.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
+                                            Text(
+                                                "Showing ${startIndex + 1}–$endIndex of ${filteredSavedCustomers.size}",
+                                                fontSize = 11.sp,
+                                                color = TextSecondary
+                                            )
+
                                             Row(
-                                                modifier = Modifier.padding(10.dp),
-                                                verticalAlignment = Alignment.CenterVertically
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                                             ) {
-                                                RadioButton(
-                                                    selected = isSelected,
-                                                    onClick = { selectedExistingCustomer = cust }
+                                                OutlinedIconButton(
+                                                    onClick = { if (currentPage > 0) customerPage = currentPage - 1 },
+                                                    enabled = currentPage > 0,
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.ChevronLeft,
+                                                        contentDescription = "Previous Page",
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+
+                                                Text(
+                                                    "${currentPage + 1}/$totalPages",
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.padding(horizontal = 4.dp)
                                                 )
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                Column {
-                                                    Text(cust.name, fontWeight = FontWeight.Bold)
-                                                    Text("${cust.phone} • ${cust.address.take(30)}", fontSize = 11.sp, color = TextSecondary)
+
+                                                OutlinedIconButton(
+                                                    onClick = { if (currentPage < totalPages - 1) customerPage = currentPage + 1 },
+                                                    enabled = currentPage < totalPages - 1,
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.ChevronRight,
+                                                        contentDescription = "Next Page",
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
                                                 }
                                             }
                                         }
