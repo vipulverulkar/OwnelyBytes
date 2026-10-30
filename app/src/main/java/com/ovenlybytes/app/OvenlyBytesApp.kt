@@ -22,5 +22,9 @@ class OvenlyBytesApp : Application() {
             inventoryDao = database.inventoryDao()
         )
     }
+
+    val shopPreferences by lazy {
+        com.ovenlybytes.app.util.ShopPreferences(this)
+    }
 }
 

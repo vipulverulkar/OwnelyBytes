@@ -172,5 +172,41 @@ class BakeryRepository(
 
     suspend fun deleteInventoryItem(item: InventoryEntity) =
         inventoryDao.deleteItem(item)
+
+    // Direct Methods for Backup & Restore
+    suspend fun getAllCustomersDirect(): List<CustomerEntity> =
+        customerDao.getAllCustomersDirect()
+
+    suspend fun getAllMenuItemsDirect(): List<MenuItemEntity> =
+        menuItemDao.getAllMenuItemsDirect()
+
+    suspend fun getAllInventoryDirect(): List<InventoryEntity> =
+        inventoryDao.getAllInventoryDirect()
+
+    suspend fun getAllOrdersDirect(): List<OrderEntity> =
+        orderDao.getAllOrdersDirect()
+
+    suspend fun getAllOrderItemsDirect(): List<OrderItemEntity> =
+        orderDao.getAllOrderItemsDirect()
+
+    suspend fun restoreFullBackup(
+        customers: List<CustomerEntity>,
+        menuItems: List<MenuItemEntity>,
+        inventory: List<InventoryEntity>,
+        orders: List<OrderEntity>,
+        orderItems: List<OrderItemEntity>
+    ) {
+        orderDao.deleteAllOrderItems()
+        orderDao.deleteAllOrders()
+        customerDao.deleteAllCustomers()
+        menuItemDao.deleteAllMenuItems()
+        inventoryDao.deleteAllInventory()
+
+        customerDao.insertCustomers(customers)
+        menuItemDao.insertMenuItems(menuItems)
+        inventoryDao.insertItems(inventory)
+        orderDao.insertOrders(orders)
+        orderDao.insertOrderItems(orderItems)
+    }
 }
 

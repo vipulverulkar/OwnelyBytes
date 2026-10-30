@@ -33,7 +33,8 @@ fun DashboardScreen(
     onNavigateToCreateOrder: () -> Unit,
     onNavigateToOrderDetail: (Long) -> Unit,
     onNavigateToOrders: () -> Unit,
-    onNavigateToInventory: () -> Unit
+    onNavigateToInventory: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val context = LocalContext.current
     val stats by viewModel.stats.collectAsState()
@@ -49,13 +50,15 @@ fun DashboardScreen(
 
     Scaffold(
         topBar = {
-            OvenlyTopAppBar()
+            OvenlyTopAppBar(
+                onSettingsClick = onNavigateToSettings
+            )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onNavigateToCreateOrder,
-                containerColor = PrimaryCocoa,
-                contentColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 icon = { Icon(Icons.Default.AddShoppingCart, contentDescription = null) },
                 text = { Text("Take New Order", fontWeight = FontWeight.Bold) }
             )
@@ -64,7 +67,7 @@ fun DashboardScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(WarmCream)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -75,10 +78,10 @@ fun DashboardScreen(
             item {
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = PrimaryCocoa.copy(alpha = 0.06f),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, PrimaryCocoa.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
                 ) {
                     Row(
                         modifier = Modifier.padding(14.dp),
@@ -88,13 +91,13 @@ fun DashboardScreen(
                             modifier = Modifier
                                 .size(44.dp)
                                 .clip(CircleShape)
-                                .background(PrimaryCocoa),
+                                .background(MaterialTheme.colorScheme.primary),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -104,7 +107,7 @@ fun DashboardScreen(
                                 text = "Order Tracking & Bakery POS",
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = PrimaryCocoa
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             )
                             Text(

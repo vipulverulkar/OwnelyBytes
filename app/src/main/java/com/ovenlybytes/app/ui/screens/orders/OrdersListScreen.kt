@@ -95,8 +95,8 @@ fun OrdersListScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNavigateToCreateOrder,
-                containerColor = PrimaryCocoa,
-                contentColor = Color.White
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Order")
             }
@@ -105,7 +105,7 @@ fun OrdersListScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(WarmCream)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
         ) {
             // Channel Filter Chips (All, WhatsApp, Phone, Walk-in)
@@ -179,7 +179,7 @@ fun OrdersListScreen(
                             labelColor = if (selectedStatus == statusKey) PrimaryCocoa else TextSecondary
                         ),
                         border = if (selectedStatus == statusKey) {
-                            AssistChipDefaults.assistChipBorder(borderColor = PrimaryCocoa, borderWidth = 1.dp)
+                            androidx.compose.foundation.BorderStroke(1.dp, PrimaryCocoa)
                         } else null
                     )
                 }

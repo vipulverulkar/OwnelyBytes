@@ -27,15 +27,16 @@ fun OvenlyTopAppBar(
     title: String = "Ovenly Bites",
     subtitle: String? = "Freshly Baked With Love ❤️",
     showEgglessBadge: Boolean = true,
+    onSettingsClick: (() -> Unit)? = null,
     navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = PrimaryCocoa,
-            titleContentColor = Color.White,
-            actionIconContentColor = Color.White,
-            navigationIconContentColor = Color.White
+            containerColor = MaterialTheme.colorScheme.primary,
+            titleContentColor = MaterialTheme.colorScheme.onPrimary,
+            actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
+            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
         ),
         navigationIcon = {
             if (navigationIcon != null) {
@@ -46,13 +47,13 @@ fun OvenlyTopAppBar(
                         .padding(start = 12.dp, end = 8.dp)
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f)),
+                        .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Cake,
                         contentDescription = "Ovenly Bites",
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -64,7 +65,7 @@ fun OvenlyTopAppBar(
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleLarge.copy(
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             fontWeight = FontWeight.Bold
                         )
                     )
@@ -100,14 +101,25 @@ fun OvenlyTopAppBar(
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = Color.White.copy(alpha = 0.85f),
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
                             fontSize = 11.sp
                         )
                     )
                 }
             }
         },
-        actions = actions
+        actions = {
+            actions()
+            if (onSettingsClick != null) {
+                IconButton(onClick = onSettingsClick) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Shop Settings",
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+        }
     )
 }
 

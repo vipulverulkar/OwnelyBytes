@@ -3,6 +3,7 @@ package com.ovenlybytes.app.ui.screens.menu
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -56,8 +57,8 @@ fun MenuCatalogScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
-                containerColor = PrimaryCocoa,
-                contentColor = Color.White
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Item")
             }
@@ -66,7 +67,7 @@ fun MenuCatalogScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(WarmCream)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
         ) {
             // Search Input
@@ -112,10 +113,20 @@ fun MenuCatalogScreen(
                         selectedLabelColor = Color.White
                     )
                 )
-                MenuCategory.values().forEach { cat ->
+                MenuCategory.entries.forEach { cat ->
+                    val catIconConfig = remember(cat.name) {
+                        com.ovenlybytes.app.util.MenuItemIconHelper.getIconConfig(cat.name)
+                    }
                     FilterChip(
                         selected = selectedCategory == cat.name,
                         onClick = { viewModel.onCategoryChanged(cat.name) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = catIconConfig.icon,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
                         label = { Text(cat.displayName) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = PrimaryCocoa,
@@ -125,7 +136,7 @@ fun MenuCatalogScreen(
                 }
             }
 
-            Divider(color = WarmBorder)
+            HorizontalDivider(color = WarmBorder)
 
             // Items List
             if (items.isEmpty()) {
@@ -186,6 +197,10 @@ fun MenuItemCard(
     onEditClick: () -> Unit,
     onToggleAvailability: () -> Unit
 ) {
+    val iconConfig = remember(item.category, item.name) {
+        com.ovenlybytes.app.util.MenuItemIconHelper.getIconConfig(item.category, item.name)
+    }
+
     Card(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = if (item.isAvailable) Color.White else Color(0xFFF5F5F5)),
@@ -196,36 +211,80 @@ fun MenuItemCard(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    // 100% Eggless Green Dot Badge
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Item Category Icon Avatar
                     Box(
                         modifier = Modifier
-                            .size(16.dp)
-                            .border(1.2.dp, EgglessGreen, RoundedCornerShape(3.dp)),
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(iconConfig.backgroundColor),
                         contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(EgglessGreen)
+                        Icon(
+                            imageVector = iconConfig.icon,
+                            contentDescription = item.name,
+                            tint = iconConfig.iconTint,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = item.name,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = if (item.isAvailable) PrimaryCocoa else TextMuted
-                        )
-                    )
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // 100% Eggless Green Dot Badge
+                            if (item.isEggless) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(15.dp)
+                                        .border(1.2.dp, EgglessGreen, RoundedCornerShape(3.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(7.dp)
+                                            .clip(CircleShape)
+                                            .background(EgglessGreen)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
+                            Text(
+                                text = item.name,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (item.isAvailable) PrimaryCocoa else TextMuted
+                                )
+                            )
+                        }
+
+                        if (item.description.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = item.description,
+                                style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary),
+                                maxLines = 2
+                            )
+                        }
+                    }
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onEditClick, modifier = Modifier.size(28.dp)) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit Price", tint = TextSecondary, modifier = Modifier.size(16.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(onClick = onEditClick, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Edit Price",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                     Switch(
                         checked = item.isAvailable,
@@ -233,15 +292,6 @@ fun MenuItemCard(
                         colors = SwitchDefaults.colors(checkedThumbColor = PrimaryCocoa, checkedTrackColor = WarmBorder)
                     )
                 }
-            }
-
-            if (item.description.isNotBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = item.description,
-                    style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary),
-                    maxLines = 2
-                )
             }
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -264,7 +314,7 @@ fun MenuItemCard(
                             Icon(Icons.Default.AccessTime, contentDescription = null, tint = StatusReceived, modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Seasonal Rate: As per current fruit rate (Customizable in order)",
+                                text = "Seasonal Rate: As per market fruit rate",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = StatusReceived
@@ -280,11 +330,11 @@ fun MenuItemCard(
                             .border(0.8.dp, WarmBorder, RoundedCornerShape(8.dp))
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(item.size1Name, fontSize = 12.sp, color = TextSecondary)
+                            Text(item.size1Name, fontSize = 12.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
                             Text("₹${item.price1.toInt()}", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = PrimaryCocoa)
                         }
                     }
@@ -297,11 +347,11 @@ fun MenuItemCard(
                             .border(0.8.dp, WarmBorder, RoundedCornerShape(8.dp))
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(item.size2Name, fontSize = 12.sp, color = TextSecondary)
+                            Text(item.size2Name, fontSize = 12.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
                             Text("₹${item.price2.toInt()}", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = PrimaryCocoa)
                         }
                     }
@@ -317,44 +367,83 @@ fun EditMenuPriceDialog(
     onDismiss: () -> Unit,
     onSave: (MenuItemEntity) -> Unit
 ) {
+    var size1Name by remember { mutableStateOf(item.size1Name) }
     var price1Text by remember { mutableStateOf(item.price1.toInt().toString()) }
+    var size2Name by remember { mutableStateOf(item.size2Name) }
     var price2Text by remember { mutableStateOf(item.price2.toInt().toString()) }
     var isSeasonal by remember { mutableStateOf(item.isSeasonalRate) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Pricing: ${item.name}", fontWeight = FontWeight.Bold, color = PrimaryCocoa) },
+        title = { Text("Edit Item Details & Prices", fontWeight = FontWeight.Bold, color = PrimaryCocoa) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(item.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+
+                HorizontalDivider(color = WarmBorder)
+
+                // Seasonal Rate Switch
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Seasonal Rate (As per fruit market):", fontSize = 12.sp)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Seasonal Fruit Rate", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Rate varies based on fruit market", fontSize = 11.sp, color = TextSecondary)
+                    }
                     Switch(checked = isSeasonal, onCheckedChange = { isSeasonal = it })
                 }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = price1Text,
-                        onValueChange = { price1Text = it },
-                        label = { Text("Price ${item.size1Name} (₹)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = price2Text,
-                        onValueChange = { price2Text = it },
-                        label = { Text("Price ${item.size2Name} (₹)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
+                if (!isSeasonal) {
+                    // Variant 1
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = size1Name,
+                            onValueChange = { size1Name = it },
+                            label = { Text("Size / Variant 1") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = price1Text,
+                            onValueChange = { price1Text = it },
+                            label = { Text("Price 1 (₹)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                    }
+
+                    // Variant 2
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = size2Name,
+                            onValueChange = { size2Name = it },
+                            label = { Text("Size / Variant 2") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = price2Text,
+                            onValueChange = { price2Text = it },
+                            label = { Text("Price 2 (₹)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                    }
                 }
             }
         },
@@ -363,7 +452,9 @@ fun EditMenuPriceDialog(
                 onClick = {
                     onSave(
                         item.copy(
+                            size1Name = size1Name.ifBlank { item.size1Name },
                             price1 = price1Text.toDoubleOrNull() ?: item.price1,
+                            size2Name = size2Name.ifBlank { item.size2Name },
                             price2 = price2Text.toDoubleOrNull() ?: item.price2,
                             isSeasonalRate = isSeasonal
                         )
@@ -394,69 +485,144 @@ fun AddNewMenuItemDialog(
     var size2Name by remember { mutableStateOf(category.defaultSizes.second) }
     var price1Text by remember { mutableStateOf("") }
     var price2Text by remember { mutableStateOf("") }
+    var isEggless by remember { mutableStateOf(true) }
     var isSeasonal by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Custom Menu Item", fontWeight = FontWeight.Bold, color = PrimaryCocoa) },
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.AddCircle, contentDescription = null, tint = PrimaryCocoa)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Add New Menu Item", fontWeight = FontWeight.Bold, color = PrimaryCocoa)
+            }
+        },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Item Name
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Item Name *") },
+                    placeholder = { Text("e.g., Belgian Truffle Cake") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Category selector
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    MenuCategory.values().forEach { cat ->
-                        FilterChip(
-                            selected = category == cat,
-                            onClick = {
-                                category = cat
-                                size1Name = cat.defaultSizes.first
-                                size2Name = cat.defaultSizes.second
-                            },
-                            label = { Text(cat.displayName, fontSize = 11.sp) }
-                        )
+                // Category Selection
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Category *", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = TextSecondary))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        MenuCategory.entries.forEach { cat ->
+                            FilterChip(
+                                selected = category == cat,
+                                onClick = {
+                                    category = cat
+                                    size1Name = cat.defaultSizes.first
+                                    size2Name = cat.defaultSizes.second
+                                },
+                                label = { Text(cat.displayName, fontSize = 11.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = PrimaryCocoa,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
                     }
                 }
 
+                // Description
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description (Optional)") },
-                    maxLines = 2,
+                    label = { Text("Description / Flavor Notes") },
+                    placeholder = { Text("e.g., Rich Belgian chocolate layers") },
+                    minLines = 2,
+                    maxLines = 3,
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // Eggless Toggle
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedTextField(
-                        value = price1Text,
-                        onValueChange = { price1Text = it },
-                        label = { Text("Price $size1Name (₹)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
+                    Text("100% Eggless", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    Switch(
+                        checked = isEggless,
+                        onCheckedChange = { isEggless = it },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = EgglessGreen)
                     )
-                    OutlinedTextField(
-                        value = price2Text,
-                        onValueChange = { price2Text = it },
-                        label = { Text("Price $size2Name (₹)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
+                }
+
+                // Seasonal Rate Toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Seasonal Fruit Rate", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    Switch(checked = isSeasonal, onCheckedChange = { isSeasonal = it })
+                }
+
+                if (!isSeasonal) {
+                    HorizontalDivider(color = WarmBorder)
+                    Text("Pricing & Portion Sizes", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa))
+
+                    // Variant 1 Name & Price
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = size1Name,
+                            onValueChange = { size1Name = it },
+                            label = { Text("Size 1 (e.g. ½ KG)") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = price1Text,
+                            onValueChange = { price1Text = it },
+                            label = { Text("Price 1 (₹)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                    }
+
+                    // Variant 2 Name & Price
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = size2Name,
+                            onValueChange = { size2Name = it },
+                            label = { Text("Size 2 (e.g. 1 KG)") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = price2Text,
+                            onValueChange = { price2Text = it },
+                            label = { Text("Price 2 (₹)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                    }
                 }
             }
         },
@@ -468,9 +634,10 @@ fun AddNewMenuItemDialog(
                             name = name.trim(),
                             category = category.name,
                             description = description.trim(),
-                            size1Name = size1Name,
+                            isEggless = isEggless,
+                            size1Name = size1Name.ifBlank { "½ KG" },
                             price1 = price1Text.toDoubleOrNull() ?: 0.0,
-                            size2Name = size2Name,
+                            size2Name = size2Name.ifBlank { "1 KG" },
                             price2 = price2Text.toDoubleOrNull() ?: 0.0,
                             isSeasonalRate = isSeasonal
                         )
@@ -479,7 +646,7 @@ fun AddNewMenuItemDialog(
                 enabled = name.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa)
             ) {
-                Text("Add Item")
+                Text("Add Item", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

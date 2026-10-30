@@ -1,26 +1,7 @@
-# Ovenly Bites - Standalone Android POS & Order Tracking App 🧁🎂
+# Ovenly Bytes - Standalone Android POS & Bakery Management App 🧁🎂
 
 > **"Freshly Baked With Love ❤️ • 100% Eggless"**  
-> A standalone, modern Android bakery management app built with **Kotlin**, **Jetpack Compose (Material 3)**, and **SQLite (Room Database)**.
-
----
-
-## 🧁 Dynamic Menu & Product Catalog Architecture
-
-The application provides a fully dynamic, database-driven menu catalog powered by **SQLite (Room Database)**. Menu categories, items, pricing tiers, and availability can be managed, edited, or expanded dynamically in real time without modifying application code.
-
-### Supported Product Categories:
-- **Classic Cakes**: Multi-tier weight variations (e.g., ½ KG, 1 KG), support for standard and seasonal rate items.
-- **Premium Collection**: High-end fusion and chocolate cakes with configurable tier pricing.
-- **Brownies**: Portion-based packaging (e.g., 250 g, 500 g).
-- **Tea Cakes**: Loaf cake portion options with dietary notes.
-- **Cookies**: Weight-based cookie boxes and tins.
-- **Custom / Seasonal**: Dynamic market-rate pricing (e.g., Mango, Fresh Fruit, themed custom orders).
-
-### Configurable Bakery Rules & Policies:
-1. **100% Eggless Assurance**: Global bakery standard highlighted across all UI views and WhatsApp receipts.
-2. **Advance Notice Period**: Dynamic scheduling validation (e.g., automated warning alert when order lead time is under 48 hours).
-3. **Customization & Design Fee**: Dedicated dynamic charge and design note capture for custom decorations, cake messages, and toppers.
+> A modern, offline-first Android bakery POS & management app built with **Kotlin**, **Jetpack Compose (Material 3)**, and **SQLite (Room Database)**.
 
 ---
 
@@ -28,296 +9,67 @@ The application provides a fully dynamic, database-driven menu catalog powered b
 
 ### 1. WhatsApp & Phone Call Order Tracking
 - **Channel Indicators**: Distinct color badges (🟢 **WhatsApp**, 🔵 **Phone Call**, 🟣 **Walk-in**).
-- **One-Tap WhatsApp Receipt Generator**: Formats order summary with item list, weights, message on cake, advance paid, and balance due, and launches WhatsApp directly.
+- **One-Tap WhatsApp Receipt Generator**: Formats itemized order summaries with weights, piped cake message, advance paid, and balance due.
 - **Automated Customer Updates**:
   - *Order Confirmation & Invoice*
-  - *Baking in Progress Notice* ("Your cake is in the oven baking with love!")
+  - *Baking Progress Notice* ("Your cake is baking with love in our oven!")
   - *Ready for Pickup / Out for Delivery Alert*
-- **One-Tap Native Phone Dialer**: Instant call to customer from order card or customer directory.
+- **Native Phone Dialer**: Instant call to customer from order card or customer directory.
 
-### 2. Standalone Offline SQLite Database (Room 2.6)
-- **Zero Cloud Dependence**: 100% standalone, runs completely offline on-device.
-- **Dynamic Data Models**: Stores and dynamically updates menus, inventory, customers, and orders.
-- **ACID Transactions**: Full transactional safety for order itemization and financial balance calculations.
+### 2. Shop Details & Branding Customization
+- **Custom Shop Profile**: Configure shop name, tagline, owner name, WhatsApp contact, email, address, FSSAI license number, and GSTIN.
+- **100% Eggless Badge**: Toggleable global eggless badge displayed across top app bar and receipts.
 
-### 3. Customer Management (CRM)
-- Customer profiles with name, phone number, delivery address, and dietary notes.
-- Quick search by name or phone number.
-- Order history tracking per customer.
+### 3. Multi-Format Database Backup & Restore (SQL / CSV / JSON)
+- **SQL Script Dump (.sql)**: Exports complete database as standard SQL `INSERT INTO` statements. Imports and executes SQL scripts.
+- **CSV Spreadsheet (.csv)**: Exports records into multi-section CSV files compatible with Microsoft Excel & Google Sheets.
+- **JSON Backup (.json)**: Full structured JSON document backup/restore.
+- **Auto-Format Detection**: Instant restore from any `.sql`, `.csv`, or `.json` file selected via document picker.
 
-### 4. Bakery Inventory & Low Stock Alerts
-- Track raw ingredients (Belgian Chocolate, Biscoff, Nutella, Butter, Flour, Cocoa).
-- Track packaging supplies (½ KG boxes, 1 KG boxes, ribbons, tins).
-- Real-time **Low Stock Alert** on the Dashboard when stock drops below threshold.
-- Quick **Restock (+)** and **Consumed (-)** adjustments.
+### 4. 5 Bakery Color Themes
+- 🍫 **Artisan Cocoa** (Classic Warm Bakery Cocoa & Caramel - Default)
+- 🍓 **Berry Velvet** (Red Velvet Burgundy & Strawberry Pink)
+- 🍯 **Golden Vanilla** (Honey Amber & Baked Pastry Gold)
+- 🍵 **Pistachio Matcha** (Fresh Green Tea & Pistachio)
+- 🌙 **Dark Mocha** (Espresso & Dark Chocolate Mode)
 
-### 5. Order Workflow Lifecycle
-- `Received` ➔ `Baking & Preparing` ➔ `Ready for Pickup` ➔ `Delivered`.
-- Financial balance tracking (Total, Advance Paid, Balance Due, Payment Mode: UPI/Cash/Card).
+### 5. Dynamic Menu Catalog with Visual Icons
+- **Visual Item Badges**: Dedicated icons for Classic Cakes (🎂), Premium Collection (✨), Brownies (🥮), Tea Cakes (☕), and Cookies (🍪).
+- **Multi-Tier Portion Pricing**: Flexible size pairs (½ KG / 1 KG, 250 g / 500 g) or customizable custom variant names and market rates.
 
----
+### 6. Customer Directory & CRM
+- Customer profiles with phone numbers, delivery landmarks, and dietary notes.
+- Instant search and customer order history tracking.
 
-## 🛠️ Tech Stack & System Architecture
-
-### 1. High-Level Architecture Diagram (MVVM + Offline-First SQLite)
-
-The application follows Google's recommended modern Android architecture guidelines using **Unidirectional Data Flow (UDF)**, clean separation of concerns, and 100% offline persistence.
-
-```mermaid
-flowchart TD
-    subgraph Presentation["🎨 Presentation Layer (Jetpack Compose & Material 3)"]
-        DashboardUI["DashboardScreen\n(KPIs & Due Orders)"]
-        OrdersUI["OrdersListScreen &\nCreateOrderScreen"]
-        DetailUI["OrderDetailScreen\n(Lifecycle Stepper)"]
-        CustomerUI["CustomerListScreen\n(CRM Directory)"]
-        InventoryUI["InventoryScreen\n(Stock & Restock)"]
-        MenuUI["MenuCatalogScreen\n(Dynamic Menu Catalog)"]
-    end
-
-    subgraph ViewModels["🧠 ViewModel Layer (StateFlow & Coroutines)"]
-        DVM["DashboardViewModel"]
-        OVM["OrdersViewModel"]
-        CVM["CustomerViewModel"]
-        IVM["InventoryViewModel"]
-        MVM["MenuViewModel"]
-    end
-
-    subgraph Repository["📦 Domain & Repository Layer"]
-        Repo["BakeryRepository\n(Data aggregation, KPI calculations, flow combines)"]
-    end
-
-    subgraph LocalStorage["💾 Persistence Layer (Standalone SQLite / Room 2.6)"]
-        DB[("OvenlyDatabase\n(Room SQLite Engine)")]
-        ODao["OrderDao (@Transaction)"]
-        CDao["CustomerDao"]
-        IDao["InventoryDao"]
-        MDao["MenuItemDao"]
-    end
-
-    subgraph SystemIntents["📱 External Communication Layer"]
-        WA["WhatsApp Messenger\n(wa.me API via ACTION_VIEW)"]
-        Dialer["Native Phone Dialer\n(ACTION_DIAL)"]
-    end
-
-    DashboardUI --> DVM
-    OrdersUI --> OVM
-    DetailUI --> OVM
-    CustomerUI --> CVM
-    InventoryUI --> IVM
-    MenuUI --> MVM
-
-    DVM --> Repo
-    OVM --> Repo
-    CVM --> Repo
-    IVM --> Repo
-    MVM --> Repo
-
-    Repo --> ODao
-    Repo --> CDao
-    Repo --> IDao
-    Repo --> MDao
-
-    ODao --> DB
-    CDao --> DB
-    IDao --> DB
-    MDao --> DB
-
-    DetailUI -.-> WA
-    OrdersUI -.-> WA
-    CustomerUI -.-> WA
-    DetailUI -.-> Dialer
-    CustomerUI -.-> Dialer
-```
+### 7. Inventory Stock & Low Stock Alerts
+- Ingredient tracking (Belgian Chocolate, Biscoff, Nutella, Butter, Flour, Cocoa).
+- Packaging supply tracking (½ KG boxes, 1 KG boxes, ribbons, tins).
+- Real-time **Low Stock Alert** notifications on the Dashboard.
 
 ---
 
-### 2. SQLite Database Schema & Entity Relationships
+## 🛠️ Tech Stack & Architecture
 
-The on-device SQLite database manages relational entities with cascading foreign keys:
-
-```mermaid
-erDiagram
-    CUSTOMERS ||--o{ ORDERS : "places (1:N)"
-    ORDERS ||--|{ ORDER_ITEMS : "contains (1:N)"
-    MENU_ITEMS ||--o{ ORDER_ITEMS : "categorizes"
-    INVENTORY
-
-    CUSTOMERS {
-        int id PK "autoGenerate"
-        string name "Customer Full Name"
-        string phone "WhatsApp / Contact Phone"
-        string email "Optional Email"
-        string address "Delivery Address / Landmark"
-        string notes "Dietary & sweetness preferences"
-        long createdAt "Timestamp"
-    }
-
-    ORDERS {
-        int id PK "autoGenerate (#OB-xxxx)"
-        int customerId FK "References CUSTOMERS(id) ON DELETE CASCADE"
-        string orderSource "WHATSAPP | PHONE | WALK_IN"
-        string orderStatus "RECEIVED | BAKING | READY | OUT_FOR_DELIVERY | DELIVERED"
-        long orderDate "Booking Date"
-        long deliveryDate "Scheduled Delivery Date"
-        string deliveryTimeSlot "e.g. 5:00 PM - 7:00 PM"
-        string cakeMessage "Piped message on cake"
-        string customizationNotes "Design & special instructions"
-        double customizationCharge "Custom cake decoration extra"
-        double discount "Promotional discount"
-        double subtotal "Sum of ordered items"
-        double totalAmount "Subtotal + Customization - Discount"
-        double advancePaid "Advance collected"
-        double balanceDue "Outstanding amount"
-        string paymentMode "UPI | CASH | CARD"
-        string paymentStatus "PENDING | PARTIAL | COMPLETED"
-        long createdAt "Timestamp"
-    }
-
-    ORDER_ITEMS {
-        int id PK "autoGenerate"
-        int orderId FK "References ORDERS(id) ON DELETE CASCADE"
-        int menuItemId FK "References MENU_ITEMS(id)"
-        string itemName "e.g. Biscoff Chocolate Cake"
-        string category "e.g. Premium Collection"
-        string variantName "½ KG | 1 KG | 250 g | 500 g"
-        double unitPrice "Variant price"
-        int quantity "Number of units"
-        double itemTotal "unitPrice * quantity"
-    }
-
-    MENU_ITEMS {
-        int id PK "autoGenerate"
-        string name "Item Name"
-        string category "CLASSIC_CAKES | PREMIUM | BROWNIES | TEA_CAKES | COOKIES"
-        string description "Item description & eggless assurance"
-        boolean isEggless "true (100% Eggless)"
-        string size1Name "½ KG or 250 g"
-        double price1 "Price for size 1"
-        string size2Name "1 KG or 500 g"
-        double price2 "Price for size 2"
-        boolean isSeasonalRate "true for Mango & Fresh Fruit"
-        boolean isAvailable "In-stock toggle"
-    }
-
-    INVENTORY {
-        int id PK "autoGenerate"
-        string itemName "Ingredient / Box name"
-        string category "INGREDIENTS | DAIRY | TOPPINGS | PACKAGING"
-        double currentQuantity "Current physical stock"
-        string unit "kg | liters | pcs | boxes"
-        double minThreshold "Low-stock trigger level"
-        double costPerUnit "Cost price per unit"
-        long lastUpdated "Timestamp"
-    }
-```
+- **Language**: Kotlin 2.1
+- **UI Framework**: Jetpack Compose with Material 3 & Navigation Compose
+- **Database**: SQLite / Room 2.8 (Offline-First)
+- **Architecture**: Clean MVVM with Unidirectional Data Flow (`StateFlow` & Coroutines)
+- **Unit & Security Testing**: JUnit 4, Kotlin Coroutines Test, input sanitization, and SQL/CSV injection prevention.
 
 ---
 
-### 3. Order Lifecycle & Status Workflow
+## 🧪 Testing Summary
 
-```mermaid
-stateDiagram-v2
-    [*] --> RECEIVED : Customer calls or messages via WhatsApp
-    RECEIVED --> BAKING : Baker taps "Mark Baking"
-    note right of BAKING : Optional: Send "Your Cake is Baking" WhatsApp update
-    BAKING --> READY : Cake baked, cooled & decorated
-    note right of READY : Optional: Send "Order Ready for Pickup" WhatsApp alert
-    READY --> OUT_FOR_DELIVERY : Handed to delivery driver
-    READY --> DELIVERED : Picked up in store
-    OUT_FOR_DELIVERY --> DELIVERED : Delivery completed & balance collected
-    DELIVERED --> [*]
-
-    RECEIVED --> CANCELLED : Customer cancelled
-    BAKING --> CANCELLED : Cancelled before dispatch
-    CANCELLED --> [*]
-```
-
----
-
-### 4. End-to-End Order Creation & WhatsApp Confirmation Flow
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Customer
-    actor Baker as Bakery Staff
-    participant UI as CreateOrderScreen
-    participant VM as OrdersViewModel
-    participant Repo as BakeryRepository
-    participant DB as SQLite (Room DB)
-    participant WA as WhatsApp App
-
-    Customer->>Baker: Calls or messages cake requirement on WhatsApp
-    Baker->>UI: Selects channel (WhatsApp / Phone)
-    Baker->>UI: Selects customer (or enters name, phone, address)
-    Baker->>UI: Picks items & variant (½ KG / 1 KG / 250g / 500g)
-    Baker->>UI: Enters custom cake message & extra charges
-    Baker->>UI: Selects delivery date (2-day notice checked)
-    Baker->>UI: Enters advance paid (Balance calculated automatically)
-    Baker->>UI: Taps "Save & Send WhatsApp Receipt"
-    UI->>VM: createOrder(customer, order, items)
-    VM->>Repo: createOrder(...)
-    Repo->>DB: @Transaction INSERT Customer, Order, OrderItems
-    DB-->>Repo: Returns generated orderId (#OB-{id})
-    Repo-->>VM: Success
-    VM-->>UI: Complete
-    UI->>WA: Launches Intent with pre-filled receipt text
-    WA-->>Customer: Delivers itemized confirmation & balance due
-```
-
----
-
-### 5. Architectural Patterns Applied
-
-| Pattern / Component | Implementation Detail | Benefit |
-| :--- | :--- | :--- |
-| **Clean MVVM** | UI observers `StateFlow` emitted by ViewModels; ViewModels hold no UI references. | Complete testability and separation of concerns. |
-| **Reactive Repository** | `BakeryRepository` combines Room DAOs using Kotlin `Flow.combine`. | Real-time UI updates whenever orders or inventory change. |
-| **ACID Transactions** | Room `@Transaction` for atomic order insertion and line-item creation. | Zero risk of orphaned items or partial order records. |
-| **Offline-First** | Standalone SQLite database engine with reactive Room DAOs and Flows. | Fully operational on-device without internet connectivity. |
-| **Material 3 Theming** | Artisan color tokens: Cocoa `#4A2518`, Rose Coral `#B85D43`, Cream `#FFFBF5`. | Distinctive, branded bakery aesthetic. |
-
----
-
-## 📂 Project Structure
-
-```
-OvenlyBytes/
-├── app/
-│   ├── build.gradle.kts
-│   └── src/main/
-│       ├── AndroidManifest.xml
-│       └── java/com/ovenlybytes/app/
-│           ├── MainActivity.kt               # Navigation & app entry
-│           ├── OvenlyBytesApp.kt             # Application class & DB holder
-│           ├── data/
-│           │   ├── local/
-│           │   │   ├── OvenlyDatabase.kt     # Room SQLite DB & Menu Seeder
-│           │   │   ├── dao/                  # DAOs (Order, Customer, Menu, Inventory)
-│           │   │   └── entities/             # Room Entities
-│           │   └── repository/
-│           │       └── BakeryRepository.kt   # Clean reactive data access
-│           ├── model/                        # Enums, Relations & DashboardStats
-│           ├── ui/
-│           │   ├── components/               # Common bakery UI widgets & badges
-│           │   ├── navigation/               # Routes & Bottom navigation
-│           │   ├── screens/
-│           │   │   ├── dashboard/            # Home KPIs & urgent deliveries
-│           │   │   ├── orders/               # Order list, Create Order, Detail
-│           │   │   ├── customers/            # Customer CRM
-│           │   │   ├── inventory/            # Ingredient & box stock tracking
-│           │   │   └── menu/                 # Digital Ovenly Bites menu
-│           │   └── theme/                    # Warm Cocoa & Cream bakery theme
-│           └── util/                         # WhatsApp & Phone helpers, formatters
-```
+Ovenly Bytes includes comprehensive Unit, Integration, and Security Test coverage:
+- **Run Tests Command**: `./gradlew app:testDebugUnit`
+- **Pass Rate**: 100% Green (`18 passed, 0 skipped, 0 failed`)
 
 ---
 
 ## 📱 How to Run in Android Studio
 
 1. Open **Android Studio** (Ladybug / Koala / Hedgehog or newer).
-2. Click **Open** and select the root project directory (`OvenlyBytes`).
-3. Android Studio will automatically recognize the Gradle build, download dependencies, and index the project.
-4. Select an Android Emulator or connected physical device (Android 7.0 / API 24+).
-5. Click the green **Run (▶)** button!
-
+2. Open the root project directory (`OvenlyBytes`).
+3. Allow Gradle to sync dependencies.
+4. Select an Android Emulator or connected device (Android 7.0 / API 24+).
+5. Click **Run (▶)**!

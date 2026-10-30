@@ -42,5 +42,11 @@ interface InventoryDao {
 
     @Query("SELECT COUNT(*) FROM inventory")
     suspend fun getInventoryCount(): Int
+
+    @Query("SELECT * FROM inventory")
+    suspend fun getAllInventoryDirect(): List<InventoryEntity>
+
+    @Query("DELETE FROM inventory")
+    suspend fun deleteAllInventory()
 }
 

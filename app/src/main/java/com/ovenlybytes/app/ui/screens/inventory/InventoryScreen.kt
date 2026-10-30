@@ -58,8 +58,8 @@ fun InventoryScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
-                containerColor = PrimaryCocoa,
-                contentColor = Color.White
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Item")
             }
@@ -68,7 +68,7 @@ fun InventoryScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(WarmCream)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
         ) {
             // Search Bar

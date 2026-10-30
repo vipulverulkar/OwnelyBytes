@@ -176,7 +176,7 @@ fun CreateOrderScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(WarmCream)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -474,9 +474,13 @@ fun CreateOrderScreen(
                             }
                         } else {
                             cartItems.forEachIndexed { index, item ->
+                                val iconConfig = remember(item.category, item.itemName) {
+                                    com.ovenlybytes.app.util.MenuItemIconHelper.getIconConfig(item.category, item.itemName)
+                                }
+
                                 Surface(
                                     shape = RoundedCornerShape(10.dp),
-                                    color = WarmCream,
+                                    color = MaterialTheme.colorScheme.background,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(vertical = 4.dp)
@@ -486,13 +490,35 @@ fun CreateOrderScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(item.itemName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                            Text(
-                                                "${item.variantName} • ₹${item.unitPrice.toInt()} x ${item.quantity} = ₹${item.itemTotal.toInt()}",
-                                                fontSize = 12.sp,
-                                                color = TextSecondary
-                                            )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(36.dp)
+                                                    .clip(CircleShape)
+                                                    .background(iconConfig.backgroundColor),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = iconConfig.icon,
+                                                    contentDescription = item.itemName,
+                                                    tint = iconConfig.iconTint,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.width(10.dp))
+
+                                            Column {
+                                                Text(item.itemName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                                Text(
+                                                    "${item.variantName} • ₹${item.unitPrice.toInt()} x ${item.quantity} = ₹${item.itemTotal.toInt()}",
+                                                    fontSize = 12.sp,
+                                                    color = TextSecondary
+                                                )
+                                            }
                                         }
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             IconButton(
@@ -958,9 +984,13 @@ fun AddMenuItemDialog(
                 // Items list
                 items(filteredItems) { item ->
                     val isSelected = selectedMenuItem?.id == item.id
+                    val iconConfig = remember(item.category, item.name) {
+                        com.ovenlybytes.app.util.MenuItemIconHelper.getIconConfig(item.category, item.name)
+                    }
+
                     Surface(
                         shape = RoundedCornerShape(10.dp),
-                        color = if (isSelected) PrimaryCocoa.copy(alpha = 0.1f) else WarmCream,
+                        color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.background,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
@@ -970,7 +1000,7 @@ fun AddMenuItemDialog(
                             }
                             .border(
                                 width = if (isSelected) 1.5.dp else 0.5.dp,
-                                color = if (isSelected) PrimaryCocoa else WarmBorder,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else WarmBorder,
                                 shape = RoundedCornerShape(10.dp)
                             )
                     ) {
@@ -980,7 +1010,28 @@ fun AddMenuItemDialog(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(item.name, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(iconConfig.backgroundColor),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = iconConfig.icon,
+                                            contentDescription = item.name,
+                                            tint = iconConfig.iconTint,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(item.name, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+
                                 if (item.isSeasonalRate) {
                                     Text("Per fruit rate", fontSize = 11.sp, color = SecondaryRose, fontWeight = FontWeight.Bold)
                                 } else {

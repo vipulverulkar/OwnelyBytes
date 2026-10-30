@@ -32,5 +32,14 @@ interface CustomerDao {
 
     @Query("SELECT COUNT(*) FROM customers")
     fun getCustomerCount(): Flow<Int>
+
+    @Query("SELECT * FROM customers")
+    suspend fun getAllCustomersDirect(): List<CustomerEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCustomers(customers: List<CustomerEntity>)
+
+    @Query("DELETE FROM customers")
+    suspend fun deleteAllCustomers()
 }
 

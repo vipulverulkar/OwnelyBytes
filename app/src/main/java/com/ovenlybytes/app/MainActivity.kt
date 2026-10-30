@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,6 +37,8 @@ import com.ovenlybytes.app.ui.screens.orders.CreateOrderScreen
 import com.ovenlybytes.app.ui.screens.orders.OrderDetailScreen
 import com.ovenlybytes.app.ui.screens.orders.OrdersListScreen
 import com.ovenlybytes.app.ui.screens.orders.OrdersViewModel
+import com.ovenlybytes.app.ui.screens.settings.SettingsScreen
+import com.ovenlybytes.app.ui.screens.settings.SettingsViewModel
 import com.ovenlybytes.app.ui.theme.OvenlyBytesTheme
 import com.ovenlybytes.app.ui.theme.PrimaryCocoa
 import com.ovenlybytes.app.ui.theme.WarmBorder
@@ -47,9 +50,7 @@ class MainActivity : ComponentActivity() {
         val app = application as OvenlyBytesApp
 
         setContent {
-            OvenlyBytesTheme {
-                OvenlyAppContent(app = app)
-            }
+            OvenlyAppContent(app = app)
         }
     }
 }
@@ -61,37 +62,50 @@ fun OvenlyAppContent(app: OvenlyBytesApp) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     // ViewModel instances backed by Room repository
-    val dashboardViewModel: DashboardViewModel = viewModel(
-        factory = DashboardViewModel.Factory(app.repository)
+    val settingsViewModel: SettingsViewModel = viewModel(
+        factory = SettingsViewModel.Factory(app.repository, app.shopPreferences)
     )
-    val ordersViewModel: OrdersViewModel = viewModel(
-        factory = OrdersViewModel.Factory(app.repository)
-    )
-    val customerViewModel: CustomerViewModel = viewModel(
-        factory = CustomerViewModel.Factory(app.repository)
-    )
-    val inventoryViewModel: InventoryViewModel = viewModel(
-        factory = InventoryViewModel.Factory(app.repository)
-    )
-    val menuViewModel: MenuViewModel = viewModel(
-        factory = MenuViewModel.Factory(app.repository)
-    )
+    val appTheme by settingsViewModel.appTheme.collectAsState()
 
-    // Show bottom bar only on primary destination screens
-    val shouldShowBottomBar = currentRoute in listOf(
-        Screen.Dashboard.route,
-        Screen.Orders.route,
-        Screen.Menu.route,
-        Screen.Inventory.route,
-        Screen.Customers.route
-    )
+    OvenlyBytesTheme(appTheme = appTheme) {
+        val dashboardViewModel: DashboardViewModel = viewModel(
+            factory = DashboardViewModel.Factory(app.repository)
+        )
+        val ordersViewModel: OrdersViewModel = viewModel(
+            factory = OrdersViewModel.Factory(app.repository)
+        )
+        val customerViewModel: CustomerViewModel = viewModel(
+            factory = CustomerViewModel.Factory(app.repository)
+        )
+        val inventoryViewModel: InventoryViewModel = viewModel(
+            factory = InventoryViewModel.Factory(app.repository)
+        )
+        val menuViewModel: MenuViewModel = viewModel(
+            factory = MenuViewModel.Factory(app.repository)
+        )
+        val reportsViewModel: com.ovenlybytes.app.ui.screens.reports.ReportsViewModel = viewModel(
+            factory = com.ovenlybytes.app.ui.screens.reports.ReportsViewModel.Factory(app.repository)
+        )
+        val settingsViewModel: SettingsViewModel = viewModel(
+            factory = SettingsViewModel.Factory(app.repository, app.shopPreferences)
+        )
+
+        // Show bottom bar only on primary destination screens
+        val shouldShowBottomBar = currentRoute in listOf(
+            Screen.Dashboard.route,
+            Screen.Orders.route,
+            Screen.Reports.route,
+            Screen.Menu.route,
+            Screen.Inventory.route,
+            Screen.Customers.route
+        )
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             if (shouldShowBottomBar) {
                 NavigationBar(
-                    containerColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.surface,
                     tonalElevation = 6.dp
                 ) {
                     bottomNavItems.forEach { item ->
@@ -123,11 +137,11 @@ fun OvenlyAppContent(app: OvenlyBytesApp) {
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = PrimaryCocoa,
-                                selectedTextColor = PrimaryCocoa,
-                                indicatorColor = PrimaryCocoa.copy(alpha = 0.12f),
-                                unselectedIconColor = Color(0xFF7A6861),
-                                unselectedTextColor = Color(0xFF7A6861)
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         )
                     }
@@ -151,7 +165,8 @@ fun OvenlyAppContent(app: OvenlyBytesApp) {
                         navController.navigate(Screen.OrderDetail.createRoute(orderId))
                     },
                     onNavigateToOrders = { navController.navigate(Screen.Orders.route) },
-                    onNavigateToInventory = { navController.navigate(Screen.Inventory.route) }
+                    onNavigateToInventory = { navController.navigate(Screen.Inventory.route) },
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
                 )
             }
 
@@ -217,7 +232,27 @@ fun OvenlyAppContent(app: OvenlyBytesApp) {
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
+
+            // Settings & Backup
+            composable(Screen.Settings.route) {
+                SettingsScreen(
+                    viewModel = settingsViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Reports & Financial Analytics
+            composable(Screen.Reports.route) {
+                com.ovenlybytes.app.ui.screens.reports.ReportsScreen(
+                    viewModel = reportsViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToOrderDetail = { orderId ->
+                        navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                    }
+                )
+            }
         }
     }
+}
 }
 

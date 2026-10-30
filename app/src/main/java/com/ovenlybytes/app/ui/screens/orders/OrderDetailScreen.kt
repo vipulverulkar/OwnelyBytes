@@ -339,17 +339,39 @@ fun OrderDetailScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         items.forEach { item ->
+                            val iconConfig = remember(item.category, item.itemName) {
+                                com.ovenlybytes.app.util.MenuItemIconHelper.getIconConfig(item.category, item.itemName)
+                            }
+
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                    .padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(iconConfig.backgroundColor),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = iconConfig.icon,
+                                        contentDescription = item.itemName,
+                                        tint = iconConfig.iconTint,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(10.dp))
+
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(item.itemName, fontWeight = FontWeight.Bold)
                                     Text("${item.variantName} • ₹${item.unitPrice.toInt()} x ${item.quantity}", color = TextSecondary, fontSize = 12.sp)
                                 }
-                                Text("₹${item.itemTotal.toInt()}", fontWeight = FontWeight.Bold)
+
+                                Text("₹${item.itemTotal.toInt()}", fontWeight = FontWeight.Bold, color = PrimaryCocoa)
                             }
                         }
 

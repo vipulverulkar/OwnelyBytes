@@ -15,6 +15,8 @@ sealed class Screen(val route: String) {
     object Customers : Screen("customers")
     object Inventory : Screen("inventory")
     object Menu : Screen("menu")
+    object Settings : Screen("settings")
+    object Reports : Screen("reports")
 }
 
 sealed class BottomNavItem(
@@ -57,11 +59,19 @@ sealed class BottomNavItem(
         selectedIcon = Icons.Filled.People,
         unselectedIcon = Icons.Outlined.People
     )
+
+    object Reports : BottomNavItem(
+        route = Screen.Reports.route,
+        title = "Reports",
+        selectedIcon = Icons.Filled.Analytics,
+        unselectedIcon = Icons.Outlined.Analytics
+    )
 }
 
 val bottomNavItems = listOf(
     BottomNavItem.Dashboard,
     BottomNavItem.Orders,
+    BottomNavItem.Reports,
     BottomNavItem.Menu,
     BottomNavItem.Inventory,
     BottomNavItem.Customers

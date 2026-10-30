@@ -62,5 +62,20 @@ interface OrderDao {
         insertOrderItems(itemsWithOrderId)
         return orderId
     }
+
+    @Query("SELECT * FROM orders")
+    suspend fun getAllOrdersDirect(): List<OrderEntity>
+
+    @Query("SELECT * FROM order_items")
+    suspend fun getAllOrderItemsDirect(): List<OrderItemEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrders(orders: List<OrderEntity>)
+
+    @Query("DELETE FROM orders")
+    suspend fun deleteAllOrders()
+
+    @Query("DELETE FROM order_items")
+    suspend fun deleteAllOrderItems()
 }
 
