@@ -1,0 +1,84 @@
+name: Build & Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Publish Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Prepare Release Artifacts
+        id: prepare_artifacts
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [ -z "$TAG" ] || [ "$TAG" = "main" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          fi
+          if [ -z "$TAG" ]; then
+            TAG="v1.0.0"
+          fi
+          
+          mkdir -p release-output
+          cp app/build/outputs/apk/release/app-release.apk release-output/OvenlyBytes-${TAG}.apk
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          ls -la release-output/
+
+      - name: Create GitHub Release & Upload APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.prepare_artifacts.outputs.tag }}
+          name: "Ovenly Bytes ${{ steps.prepare_artifacts.outputs.tag }}"
+          body: |
+            ## 🧁 Ovenly Bytes Release ${{ steps.prepare_artifacts.outputs.tag }}
+            
+            ### ✨ Highlights:
+            * **100% Standalone & Offline**: Powered by an on-device SQLite database (Room 2.6).
+            * **Order Tracking**: Seamless tracking for orders received via WhatsApp & Phone Calls.
+            * **Dynamic Catalog**: Full menu management with portion and weight variants.
+            * **Customer CRM**: Client contact directory with direct one-tap WhatsApp and phone dialer integration.
+            * **Inventory Control**: Real-time stock tracking with low-stock alerts.
+            * **Sales Reports & Backup**: Financial summaries, exportable backups, and theme customization.
+            
+            ### 📥 Download:
+            Download and install `OvenlyBytes-${{ steps.prepare_artifacts.outputs.tag }}.apk` on any Android device running Android 7.0 (API 24) or newer.
+          files: |
+            release-output/*.apk
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
