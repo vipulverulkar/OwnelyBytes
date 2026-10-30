@@ -120,6 +120,18 @@ class OrdersViewModel(
         repository.updateOrderWithItems(order, items)
     }
 
+    fun updateCustomer(customer: CustomerEntity) {
+        viewModelScope.launch {
+            repository.updateCustomer(customer)
+        }
+    }
+
+    fun deleteCustomer(customer: CustomerEntity) {
+        viewModelScope.launch {
+            repository.deleteCustomer(customer)
+        }
+    }
+
     fun getOrderDetails(orderId: Long): Flow<OrderWithCustomerAndItems?> {
         return repository.getOrderWithDetails(orderId)
     }

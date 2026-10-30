@@ -56,6 +56,7 @@ fun OrderDetailScreen(
 
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showEditOrderDialog by remember { mutableStateOf(false) }
+    var showEditCustomerDialog by remember { mutableStateOf(false) }
 
     if (orderDetails == null) {
         Box(
@@ -332,7 +333,22 @@ fun OrderDetailScreen(
                                 text = "Customer Information",
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa)
                             )
-                            OrderChannelBadge(sourceName = order.orderSource)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                OrderChannelBadge(sourceName = order.orderSource)
+                                if (customer != null) {
+                                    IconButton(
+                                        onClick = { showEditCustomerDialog = true },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = "Edit Customer",
+                                            tint = PrimaryCocoa,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -540,6 +556,25 @@ fun OrderDetailScreen(
                 TextButton(onClick = { showDeleteConfirmDialog = false }) {
                     Text("Cancel", color = TextSecondary)
                 }
+            }
+        )
+    }
+
+    if (showEditCustomerDialog && customer != null) {
+        com.ovenlybytes.app.ui.screens.customers.CustomerFormDialog(
+            customer = customer,
+            onDismiss = { showEditCustomerDialog = false },
+            onSave = { name, phone, email, address, notes ->
+                viewModel.updateCustomer(
+                    customer.copy(
+                        name = name,
+                        phone = phone,
+                        email = email,
+                        address = address,
+                        notes = notes
+                    )
+                )
+                showEditCustomerDialog = false
             }
         )
     }

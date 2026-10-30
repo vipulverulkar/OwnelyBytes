@@ -69,6 +69,8 @@ fun CreateOrderScreen(
     var customerAddress by remember { mutableStateOf("") }
     var customerSearchQuery by remember { mutableStateOf("") }
     var customerPage by remember { mutableStateOf(0) }
+    var customerToEdit by remember { mutableStateOf<CustomerEntity?>(null) }
+    var customerToDelete by remember { mutableStateOf<CustomerEntity?>(null) }
 
     // Contact Book Picker Launcher
     val pickContactLauncher = rememberLauncherForActivityResult(
@@ -590,16 +592,31 @@ fun CreateOrderScreen(
                                             ) {
                                                 Row(
                                                     modifier = Modifier.padding(10.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween
                                                 ) {
-                                                    RadioButton(
-                                                        selected = isSelected,
-                                                        onClick = { selectedExistingCustomer = cust }
-                                                    )
-                                                    Spacer(modifier = Modifier.width(6.dp))
-                                                    Column {
-                                                        Text(cust.name, fontWeight = FontWeight.Bold)
-                                                        Text("${cust.phone} • ${cust.address.take(30)}", fontSize = 11.sp, color = TextSecondary)
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        RadioButton(
+                                                            selected = isSelected,
+                                                            onClick = { selectedExistingCustomer = cust }
+                                                        )
+                                                        Spacer(modifier = Modifier.width(6.dp))
+                                                        Column {
+                                                            Text(cust.name, fontWeight = FontWeight.Bold)
+                                                            Text("${cust.phone} • ${cust.address.take(30)}", fontSize = 11.sp, color = TextSecondary)
+                                                        }
+                                                    }
+
+                                                    Row {
+                                                        IconButton(onClick = { customerToEdit = cust }, modifier = Modifier.size(28.dp)) {
+                                                            Icon(Icons.Default.Edit, contentDescription = "Edit Customer", tint = TextSecondary, modifier = Modifier.size(16.dp))
+                                                        }
+                                                        IconButton(onClick = { customerToDelete = cust }, modifier = Modifier.size(28.dp)) {
+                                                            Icon(Icons.Default.DeleteOutline, contentDescription = "Delete Customer", tint = BalanceDueColor, modifier = Modifier.size(16.dp))
+                                                        }
                                                     }
                                                 }
                                             }
@@ -1149,6 +1166,50 @@ fun CreateOrderScreen(
 
             item { Spacer(modifier = Modifier.height(40.dp)) }
         }
+    }
+
+    // Customer Edit Dialog
+    if (customerToEdit != null) {
+        com.ovenlybytes.app.ui.screens.customers.CustomerFormDialog(
+            customer = customerToEdit,
+            onDismiss = { customerToEdit = null },
+            onSave = { name, phone, email, address, notes ->
+                viewModel.updateCustomer(
+                    customerToEdit!!.copy(
+                        name = name,
+                        phone = phone,
+                        email = email,
+                        address = address,
+                        notes = notes
+                    )
+                )
+                customerToEdit = null
+            }
+        )
+    }
+
+    // Customer Delete Confirmation
+    if (customerToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { customerToDelete = null },
+            title = { Text("Delete Saved Customer?") },
+            text = { Text("Are you sure you want to delete ${customerToDelete?.name}? This will also delete their associated order records.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteCustomer(customerToDelete!!)
+                        customerToDelete = null
+                    }
+                ) {
+                    Text("Delete", color = BalanceDueColor, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { customerToDelete = null }) {
+                    Text("Cancel", color = TextSecondary)
+                }
+            }
+        )
     }
 
     // DIALOG: ADD MENU ITEM (Directly lists items from the Ovenly Bites Menu)
