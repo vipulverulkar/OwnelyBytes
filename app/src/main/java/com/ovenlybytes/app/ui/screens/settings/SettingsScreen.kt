@@ -33,7 +33,9 @@ import java.util.*
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToCustomers: () -> Unit = {},
+    onNavigateToInventory: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val shopDetails by viewModel.shopDetails.collectAsState()
@@ -161,7 +163,77 @@ fun SettingsScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
-                // SECTION 1: APP THEMES
+                // SECTION 1: QUICK MANAGEMENT DIRECTORY
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Bakery Directory & Stock Hub",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            // Clients Directory Card
+                            Surface(
+                                onClick = onNavigateToCustomers,
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.People, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Text("Client CRM", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                        Text("Customer Directory", fontSize = 11.sp, color = TextSecondary)
+                                    }
+                                }
+                            }
+
+                            // Inventory Stock Card
+                            Surface(
+                                onClick = onNavigateToInventory,
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Inventory2, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Text("Bakery Stock", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                        Text("Ingredients & Boxes", fontSize = 11.sp, color = TextSecondary)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // SECTION 2: APP THEMES
                 val currentTheme by viewModel.appTheme.collectAsState()
 
                 Card(

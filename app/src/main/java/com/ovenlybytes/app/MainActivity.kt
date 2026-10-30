@@ -96,8 +96,7 @@ fun OvenlyAppContent(app: OvenlyBytesApp) {
             Screen.Orders.route,
             Screen.Reports.route,
             Screen.Menu.route,
-            Screen.Inventory.route,
-            Screen.Customers.route
+            Screen.Settings.route
         )
 
     Scaffold(
@@ -233,11 +232,13 @@ fun OvenlyAppContent(app: OvenlyBytesApp) {
                 )
             }
 
-            // Settings & Backup
+            // Settings & Hub
             composable(Screen.Settings.route) {
                 SettingsScreen(
                     viewModel = settingsViewModel,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToCustomers = { navController.navigate(Screen.Customers.route) },
+                    onNavigateToInventory = { navController.navigate(Screen.Inventory.route) }
                 )
             }
 

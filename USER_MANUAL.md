@@ -9,13 +9,14 @@ Welcome to **Ovenly Bytes**, your all-in-one, offline-first Android Bakery POS a
 2. [Dashboard POS & Daily Operations](#2-dashboard-pos--daily-operations)
 3. [Taking Orders & Sending WhatsApp Receipts](#3-taking-orders--sending-whatsapp-receipts)
 4. [Order Status Lifecycle & Customer Updates](#4-order-status-lifecycle--customer-updates)
-5. [Menu Catalog & Item Icon Management](#5-menu-catalog--item-icon-management)
-6. [Inventory Stock & Low Stock Alerts](#6-inventory-stock--low-stock-alerts)
-7. [Customer Directory & CRM](#7-customer-directory--crm)
-8. [Shop Profile & Branding Settings](#8-shop-profile--branding-settings)
-9. [Database Backup & Restore (SQL / CSV / JSON)](#9-database-backup--restore-sql--csv--json)
-10. [Customizing App Color Themes](#10-customizing-app-color-themes)
-11. [Security, Data Privacy & Best Practices](#11-security-data-privacy--best-practices)
+5. [Financial Reports & Revenue Analytics](#5-financial-reports--revenue-analytics)
+6. [Menu Catalog & Item Icon Management](#6-menu-catalog--item-icon-management)
+7. [Inventory Stock & Low Stock Alerts](#7-inventory-stock--low-stock-alerts)
+8. [Customer Directory & CRM](#8-customer-directory--crm)
+9. [Shop Profile & Branding Settings](#9-shop-profile--branding-settings)
+10. [Database Backup & Restore (SQL / CSV / JSON)](#10-database-backup--restore-sql--csv--json)
+11. [Customizing App Color Themes](#11-customizing-app-color-themes)
+12. [Security, Data Privacy & Best Practices](#12-security-data-privacy--best-practices)
 
 ---
 
@@ -35,6 +36,8 @@ Ovenly Bytes is designed for home bakers, artisan cake studios, and commercial b
 
 When you launch Ovenly Bytes, the **Home Dashboard** displays your key operational indicators (KPIs):
 
+![Home Dashboard](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/01_dashboard.png)
+
 - **Active Orders Summary**: Shows pending, baking, ready for pickup, and delivered order counts.
 - **Financial Metrics**: Real-time total revenue and total balance pending collection.
 - **Orders Due Today Alert**: Displays orders scheduled for delivery today.
@@ -46,6 +49,8 @@ When you launch Ovenly Bytes, the **Home Dashboard** displays your key operation
 
 To create a new order, tap the **"Take New Order"** button on the Dashboard or Orders list:
 
+![New Customer Order Form](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/06_new_order.png)
+
 ### Step 1: Order Channel & Lead Time Notice
 1. Select the order channel: **WhatsApp (🟢)**, **Phone Call (🔵)**, or **Walk-in (🟣)**.
 2. Select the delivery date and time slot. If the delivery date is within 48 hours, an advance notice reminder is displayed.
@@ -53,8 +58,10 @@ To create a new order, tap the **"Take New Order"** button on the Dashboard or O
 ### Step 2: Customer Selection or Registration
 1. Search and select an existing customer from your directory, or enter details for a new customer (Name, WhatsApp Phone Number, Delivery Address, Dietary Notes).
 
+![Paginated & Searchable Saved Client Picker](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/07_saved_clients.png)
+
 ### Step 3: Item Selection & Customizations
-1. Browse menu categories or search items.
+1. Browse menu categories or search items with visual icon badges.
 2. Select portion weight/variant (e.g. ½ KG, 1 KG, 250 g, 500 g) and quantity.
 3. Enter piped message on cake (e.g. *"Happy 30th Birthday Rahul ❤️"*).
 4. Add customization decoration notes and extra charges if applicable.
@@ -74,11 +81,29 @@ Each order progresses through 5 clear stages:
 4. **Delivered**: Order handed over and final balance collected.
 5. **Cancelled**: Order cancelled.
 
+![Orders List Tracking](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/02_orders.png)
+
+![Order Detail Status Lifecycle](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/08_order_details.png)
+
 ---
 
-## 5. Menu Catalog & Item Icon Management
+## 5. Financial Reports & Revenue Analytics
+
+Go to the **Reports** tab to review your bakery financials:
+
+![Financial Analytics & Revenue Reports](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/03_reports.png)
+
+- **Time Filters**: Filter stats by **All Time**, **Today**, **This Month**, **This Year**.
+- **Revenue Breakdown**: View daily, monthly, and annual sales trends.
+- **Pending Payments Directory**: Track orders with unpaid balances (`balanceDue > 0`) with 1-tap WhatsApp payment reminders.
+
+---
+
+## 6. Menu Catalog & Item Icon Management
 
 Go to the **Menu** tab to view and manage your product catalog:
+
+![Menu Catalog Screen](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/04_menu.png)
 
 - **Visual Category Badges & Icons**:
   - 🎂 **Classic Cakes**: Vanilla, Pineapple, Black Forest, Red Velvet, Strawberry, Mango.
@@ -91,9 +116,9 @@ Go to the **Menu** tab to view and manage your product catalog:
 
 ---
 
-## 6. Inventory Stock & Low Stock Alerts
+## 7. Inventory Stock & Low Stock Alerts
 
-Go to the **Stock** tab to track raw materials and packaging:
+Go to **Settings ➔ Bakery Stock** (or Home Low Stock banner) to track raw materials and packaging:
 
 - **Categories**: Ingredients (Flour, Cocoa, Chocolate), Dairy (Whipping Cream, Butter), Toppings (Biscoff, Nutella), Packaging (½ KG / 1 KG Window Boxes, Gift Boxes).
 - **Stock Adjustments**: Tap `+` or `-` to update physical quantities.
@@ -101,9 +126,9 @@ Go to the **Stock** tab to track raw materials and packaging:
 
 ---
 
-## 7. Customer Directory & CRM
+## 8. Customer Directory & CRM
 
-Go to the **Clients** tab to manage customer records:
+Go to **Settings ➔ Client CRM** to manage customer records:
 
 - Search customers instantly by name or phone number.
 - View total orders placed and total spent per customer.
@@ -111,9 +136,11 @@ Go to the **Clients** tab to manage customer records:
 
 ---
 
-## 8. Shop Profile & Branding Settings
+## 9. Shop Profile & Branding Settings
 
-Go to **Settings** (Gear icon on Dashboard) to customize your bakery profile:
+Go to **Settings** to customize your bakery profile:
+
+![Shop Settings & Backup Hub](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/05_settings.png)
 
 - **Shop Details**: Shop / Bakery Name, Tagline, Owner Name, Contact Phone/WhatsApp, Email Address, Full Shop Address, FSSAI License Number, and GSTIN.
 - **100% Eggless Badge**: Enable or disable the green eggless indicator across the app top app bar and receipts.
@@ -121,7 +148,7 @@ Go to **Settings** (Gear icon on Dashboard) to customize your bakery profile:
 
 ---
 
-## 9. Database Backup & Restore (SQL / CSV / JSON)
+## 10. Database Backup & Restore (SQL / CSV / JSON)
 
 Keep your data safe with multi-format backup tools in **Settings ➔ Database Backup & Restore**:
 
@@ -137,21 +164,24 @@ Keep your data safe with multi-format backup tools in **Settings ➔ Database Ba
 
 ---
 
-## 10. Customizing App Color Themes
+## 11. Customizing App Color Themes
 
-In **Settings ➔ App Color Themes**, choose from 5 warm bakery color palettes:
+In **Settings ➔ App Color Themes**, choose from 8 warm bakery color palettes:
 
 1. 🍫 **Artisan Cocoa** *(Default)*: Warm deep artisan cocoa, caramel, and cream.
-2. 🍓 **Berry Velvet**: Rich red velvet burgundy, strawberry pink, and rose.
+2. 🍓 **Strawberry Shortcake**: Delicate rose pink & berry cream.
 3. 🍯 **Golden Vanilla**: Deep honey amber, baked golden pastry, and warm cream.
 4. 🍵 **Pistachio Matcha**: Fresh green tea forest, pistachio mint, and light cream.
-5. 🌙 **Dark Mocha**: Rich espresso dark chocolate mode for low-light environments.
+5. 🍋 **Lemon Chiffon**: Sunlit citrus yellow & fresh vanilla.
+6. 🫐 **Blueberry Macaron**: Soft lavender blueberry & sweet cream.
+7. 🍑 **Peach Cobbler**: Warm apricot peach & cinnamon bake.
+8. 🌙 **Dark Mocha**: Rich espresso dark chocolate mode for low-light environments.
 
 Tapping any theme swatch instantly applies the new color scheme across all screens and status bars!
 
 ---
 
-## 11. Security, Data Privacy & Best Practices
+## 12. Security, Data Privacy & Best Practices
 
 - **Zero Cloud Leakage**: All customer addresses, order financial figures, and contact details remain 100% local on your Android device.
 - **SQL & CSV Injection Prevention**: All text fields, notes, and messages are automatically sanitized and escaped (`''` for SQL, `""` for CSV) during export/import operations.

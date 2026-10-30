@@ -40,6 +40,7 @@ fun ReportsScreen(
     val stats by viewModel.reportStats.collectAsState()
 
     var selectedTab by remember { mutableStateOf(0) } // 0: Daily, 1: Monthly, 2: Yearly
+    var pendingPage by remember { mutableStateOf(0) }
 
     Scaffold(
         topBar = {
@@ -419,7 +420,15 @@ fun ReportsScreen(
                         }
                     }
                 } else {
-                    items(stats.pendingPaymentOrders) { orderDetail ->
+                    val pendingList = stats.pendingPaymentOrders
+                    val pageSize = 4
+                    val totalPages = maxOf(1, (pendingList.size + pageSize - 1) / pageSize)
+                    val safePage = pendingPage.coerceIn(0, totalPages - 1)
+                    val startIndex = safePage * pageSize
+                    val endIndex = minOf(startIndex + pageSize, pendingList.size)
+                    val paginatedPending = pendingList.subList(startIndex, endIndex)
+
+                    items(paginatedPending) { orderDetail ->
                         val order = orderDetail.order
                         val customer = orderDetail.customer
 
@@ -488,6 +497,59 @@ fun ReportsScreen(
                                         shape = RoundedCornerShape(10.dp)
                                     ) {
                                         Text("View Order", fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Pending Orders Pagination Bar
+                    if (totalPages > 1) {
+                        item {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color.White,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        "Showing ${startIndex + 1}–$endIndex of ${pendingList.size} pending orders",
+                                        fontSize = 12.sp,
+                                        color = TextSecondary
+                                    )
+
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        OutlinedIconButton(
+                                            onClick = { if (safePage > 0) pendingPage = safePage - 1 },
+                                            enabled = safePage > 0,
+                                            modifier = Modifier.size(34.dp)
+                                        ) {
+                                            Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Page", modifier = Modifier.size(18.dp))
+                                        }
+
+                                        Text(
+                                            "${safePage + 1}/$totalPages",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 4.dp)
+                                        )
+
+                                        OutlinedIconButton(
+                                            onClick = { if (safePage < totalPages - 1) pendingPage = safePage + 1 },
+                                            enabled = safePage < totalPages - 1,
+                                            modifier = Modifier.size(34.dp)
+                                        ) {
+                                            Icon(Icons.Default.ChevronRight, contentDescription = "Next Page", modifier = Modifier.size(18.dp))
+                                        }
                                     }
                                 }
                             }

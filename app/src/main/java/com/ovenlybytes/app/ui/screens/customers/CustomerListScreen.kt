@@ -1,5 +1,9 @@
 package com.ovenlybytes.app.ui.screens.customers
 
+import android.provider.ContactsContract
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -39,6 +43,11 @@ fun CustomerListScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var customerToEdit by remember { mutableStateOf<CustomerEntity?>(null) }
     var customerToDelete by remember { mutableStateOf<CustomerEntity?>(null) }
+    var currentPage by remember { mutableStateOf(0) }
+
+    LaunchedEffect(searchQuery) {
+        currentPage = 0
+    }
 
     Scaffold(
         topBar = {
@@ -109,12 +118,21 @@ fun CustomerListScreen(
                     }
                 }
             } else {
+                val pageSize = 6
+                val totalPages = maxOf(1, (customers.size + pageSize - 1) / pageSize)
+                val safePage = currentPage.coerceIn(0, totalPages - 1)
+                val startIndex = safePage * pageSize
+                val endIndex = minOf(startIndex + pageSize, customers.size)
+                val paginatedCustomers = remember(customers, safePage) {
+                    customers.subList(startIndex, endIndex)
+                }
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(customers, key = { it.id }) { customer ->
+                    items(paginatedCustomers, key = { it.id }) { customer ->
                         CustomerCard(
                             customer = customer,
                             onWhatsAppClick = {
@@ -131,6 +149,58 @@ fun CustomerListScreen(
                             }
                         )
                     }
+
+                    // Pagination Navigation Bar
+                    item {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    "Showing ${startIndex + 1}–$endIndex of ${customers.size} clients",
+                                    fontSize = 12.sp,
+                                    color = TextSecondary
+                                )
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    OutlinedIconButton(
+                                        onClick = { if (safePage > 0) currentPage = safePage - 1 },
+                                        enabled = safePage > 0,
+                                        modifier = Modifier.size(34.dp)
+                                    ) {
+                                        Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Page", modifier = Modifier.size(18.dp))
+                                    }
+
+                                    Text(
+                                        "${safePage + 1}/$totalPages",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 4.dp)
+                                    )
+
+                                    OutlinedIconButton(
+                                        onClick = { if (safePage < totalPages - 1) currentPage = safePage + 1 },
+                                        enabled = safePage < totalPages - 1,
+                                        modifier = Modifier.size(34.dp)
+                                    ) {
+                                        Icon(Icons.Default.ChevronRight, contentDescription = "Next Page", modifier = Modifier.size(18.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     item { Spacer(modifier = Modifier.height(64.dp)) }
                 }
             }
@@ -297,21 +367,104 @@ fun CustomerFormDialog(
     onDismiss: () -> Unit,
     onSave: (String, String, String, String, String) -> Unit
 ) {
+    val context = LocalContext.current
     var name by remember { mutableStateOf(customer?.name ?: "") }
     var phone by remember { mutableStateOf(customer?.phone ?: "") }
     var email by remember { mutableStateOf(customer?.email ?: "") }
     var address by remember { mutableStateOf(customer?.address ?: "") }
     var notes by remember { mutableStateOf(customer?.notes ?: "") }
 
+    val pickContactLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickContact()
+    ) { contactUri ->
+        if (contactUri != null) {
+            try {
+                val contentResolver = context.contentResolver
+                val cursor = contentResolver.query(
+                    contactUri,
+                    arrayOf(
+                        ContactsContract.Contacts._ID,
+                        ContactsContract.Contacts.DISPLAY_NAME,
+                        ContactsContract.Contacts.HAS_PHONE_NUMBER
+                    ),
+                    null, null, null
+                )
+
+                cursor?.use { c ->
+                    if (c.moveToFirst()) {
+                        val idIndex = c.getColumnIndex(ContactsContract.Contacts._ID)
+                        val nameIndex = c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
+                        val hasPhoneIndex = c.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)
+
+                        val contactId = if (idIndex != -1) c.getString(idIndex) else ""
+                        val contactName = if (nameIndex != -1) c.getString(nameIndex) else ""
+                        val hasPhone = if (hasPhoneIndex != -1) c.getInt(hasPhoneIndex) > 0 else false
+
+                        if (contactName.isNotBlank()) {
+                            name = contactName
+                        }
+
+                        if (hasPhone && contactId.isNotBlank()) {
+                            val phoneCursor = contentResolver.query(
+                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                                arrayOf(ContactsContract.CommonDataKinds.Phone.NUMBER),
+                                "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
+                                arrayOf(contactId),
+                                null
+                            )
+
+                            phoneCursor?.use { pc ->
+                                if (pc.moveToFirst()) {
+                                    val phoneNumIndex = pc.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                                    if (phoneNumIndex != -1) {
+                                        val rawPhone = pc.getString(phoneNumIndex) ?: ""
+                                        val cleanPhone = rawPhone.replace(Regex("[^0-9]"), "")
+                                        if (cleanPhone.isNotBlank()) {
+                                            phone = cleanPhone
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Toast.makeText(context, "Contact imported: $contactName", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to read contact: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (customer != null) "Edit Customer" else "Add New Customer", fontWeight = FontWeight.Bold, color = PrimaryCocoa) },
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(if (customer != null) "Edit Customer" else "Add New Customer", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                TextButton(
+                    onClick = { pickContactLauncher.launch(null) },
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Icon(Icons.Default.Contacts, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Import Phonebook", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Full Name *") },
+                    trailingIcon = {
+                        IconButton(onClick = { pickContactLauncher.launch(null) }) {
+                            Icon(Icons.Default.Contacts, contentDescription = "Pick Contact", tint = MaterialTheme.colorScheme.primary)
+                        }
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )

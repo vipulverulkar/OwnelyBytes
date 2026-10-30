@@ -74,51 +74,6 @@ fun DashboardScreen(
         ) {
             item { Spacer(modifier = Modifier.height(4.dp)) }
 
-            // Brand Banner / Tagline Notice
-            item {
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "Order Tracking & Bakery POS",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            )
-                            Text(
-                                text = "Track WhatsApp & Phone calls • 100% Eggless • 2 Days Notice",
-                                style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
-                            )
-                        }
-                    }
-                }
-            }
-
             // High Priority Low Stock Alert Banner (if any)
             if (stats.lowStockCount > 0) {
                 item {
@@ -164,53 +119,64 @@ fun DashboardScreen(
                 }
             }
 
-            // Quick Stats Grid
+            // Quick KPI Overview Bar
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        StatCard(
-                            title = "Active Orders",
-                            value = "${stats.pendingOrdersCount + stats.bakingOrdersCount + stats.readyOrdersCount}",
-                            subtitle = "${stats.bakingOrdersCount} baking, ${stats.readyOrdersCount} ready",
-                            icon = Icons.Default.Kitchen,
-                            iconTint = StatusBaking,
-                            modifier = Modifier.weight(1f),
-                            onClick = onNavigateToOrders
-                        )
-                        StatCard(
-                            title = "Due Today",
-                            value = "${stats.dueTodayCount}",
-                            subtitle = "Deliveries for today",
-                            icon = Icons.Default.Today,
-                            iconTint = StatusReceived,
-                            modifier = Modifier.weight(1f),
-                            onClick = onNavigateToOrders
-                        )
-                    }
+                        // Active Orders
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onNavigateToOrders() }
+                        ) {
+                            Text("Active Orders", fontSize = 11.sp, color = TextSecondary)
+                            Text(
+                                text = "${stats.pendingOrdersCount + stats.bakingOrdersCount + stats.readyOrdersCount}",
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            )
+                            Text("${stats.bakingOrdersCount} baking", fontSize = 10.sp, color = TextMuted)
+                        }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        StatCard(
-                            title = "Total Revenue",
-                            value = Formatters.formatCurrency(stats.totalRevenue),
-                            subtitle = "Pending: ${Formatters.formatCurrency(stats.totalBalancePending)}",
-                            icon = Icons.Default.CurrencyRupee,
-                            iconTint = EgglessGreen,
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatCard(
-                            title = "WhatsApp / Phone",
-                            value = "${stats.whatsappOrdersCount} / ${stats.phoneOrdersCount}",
-                            subtitle = "Orders by channel",
-                            icon = Icons.Default.Chat,
-                            iconTint = WhatsAppGreenDark,
-                            modifier = Modifier.weight(1f)
-                        )
+                        VerticalDivider(modifier = Modifier.height(36.dp), color = WarmBorder)
+
+                        // Due Today
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onNavigateToOrders() }
+                        ) {
+                            Text("Due Today", fontSize = 11.sp, color = TextSecondary)
+                            Text(
+                                text = "${stats.dueTodayCount}",
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, color = StatusReceived)
+                            )
+                            Text("Deliveries", fontSize = 10.sp, color = TextMuted)
+                        }
+
+                        VerticalDivider(modifier = Modifier.height(36.dp), color = WarmBorder)
+
+                        // Total Revenue
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                            Text("Total Revenue", fontSize = 11.sp, color = TextSecondary)
+                            Text(
+                                text = Formatters.formatCurrency(stats.totalRevenue),
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = StatusDelivered)
+                            )
+                            Text("Pending: ${Formatters.formatCurrency(stats.totalBalancePending)}", fontSize = 10.sp, color = TextMuted)
+                        }
                     }
                 }
             }

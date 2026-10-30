@@ -53,18 +53,18 @@ sealed class BottomNavItem(
         unselectedIcon = Icons.Outlined.Inventory2
     )
 
-    object Customers : BottomNavItem(
-        route = Screen.Customers.route,
-        title = "Clients",
-        selectedIcon = Icons.Filled.People,
-        unselectedIcon = Icons.Outlined.People
-    )
-
     object Reports : BottomNavItem(
         route = Screen.Reports.route,
         title = "Reports",
         selectedIcon = Icons.Filled.Analytics,
         unselectedIcon = Icons.Outlined.Analytics
+    )
+
+    object Settings : BottomNavItem(
+        route = Screen.Settings.route,
+        title = "Settings",
+        selectedIcon = Icons.Filled.Settings,
+        unselectedIcon = Icons.Outlined.Settings
     )
 }
 
@@ -73,7 +73,6 @@ val bottomNavItems = listOf(
     BottomNavItem.Orders,
     BottomNavItem.Reports,
     BottomNavItem.Menu,
-    BottomNavItem.Inventory,
-    BottomNavItem.Customers
+    BottomNavItem.Settings
 )
 

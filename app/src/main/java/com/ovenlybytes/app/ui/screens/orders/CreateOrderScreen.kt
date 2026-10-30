@@ -1,7 +1,11 @@
 package com.ovenlybytes.app.ui.screens.orders
 
 import android.app.DatePickerDialog
+import android.provider.ContactsContract
 import android.widget.DatePicker
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -62,6 +66,70 @@ fun CreateOrderScreen(
     var customerAddress by remember { mutableStateOf("") }
     var customerSearchQuery by remember { mutableStateOf("") }
     var customerPage by remember { mutableStateOf(0) }
+
+    // Contact Book Picker Launcher
+    val pickContactLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickContact()
+    ) { contactUri ->
+        if (contactUri != null) {
+            try {
+                val contentResolver = context.contentResolver
+                val cursor = contentResolver.query(
+                    contactUri,
+                    arrayOf(
+                        ContactsContract.Contacts._ID,
+                        ContactsContract.Contacts.DISPLAY_NAME,
+                        ContactsContract.Contacts.HAS_PHONE_NUMBER
+                    ),
+                    null,
+                    null,
+                    null
+                )
+
+                cursor?.use { c ->
+                    if (c.moveToFirst()) {
+                        val idIndex = c.getColumnIndex(ContactsContract.Contacts._ID)
+                        val nameIndex = c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
+                        val hasPhoneIndex = c.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)
+
+                        val contactId = if (idIndex != -1) c.getString(idIndex) else ""
+                        val name = if (nameIndex != -1) c.getString(nameIndex) else ""
+                        val hasPhone = if (hasPhoneIndex != -1) c.getInt(hasPhoneIndex) > 0 else false
+
+                        if (name.isNotBlank()) {
+                            customerName = name
+                        }
+
+                        if (hasPhone && contactId.isNotBlank()) {
+                            val phoneCursor = contentResolver.query(
+                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                                arrayOf(ContactsContract.CommonDataKinds.Phone.NUMBER),
+                                "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
+                                arrayOf(contactId),
+                                null
+                            )
+
+                            phoneCursor?.use { pc ->
+                                if (pc.moveToFirst()) {
+                                    val phoneNumIndex = pc.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                                    if (phoneNumIndex != -1) {
+                                        val rawPhone = pc.getString(phoneNumIndex) ?: ""
+                                        val cleanPhone = rawPhone.replace(Regex("[^0-9]"), "")
+                                        if (cleanPhone.isNotBlank()) {
+                                            customerPhone = cleanPhone
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Toast.makeText(context, "Contact imported: $name", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to read contact: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     // 3. Cart Items
     var cartItems by remember { mutableStateOf(listOf<OrderItemEntity>()) }
@@ -351,11 +419,44 @@ fun CreateOrderScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         if (isNewCustomer) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                TextButton(
+                                    onClick = { pickContactLauncher.launch(null) },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.ContactPage,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        "Pick from Phonebook",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+
                             OutlinedTextField(
                                 value = customerName,
                                 onValueChange = { customerName = it },
                                 label = { Text("Customer Name *") },
                                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                                trailingIcon = {
+                                    IconButton(onClick = { pickContactLauncher.launch(null) }) {
+                                        Icon(
+                                            Icons.Default.Contacts,
+                                            contentDescription = "Pick Contact",
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true
                             )

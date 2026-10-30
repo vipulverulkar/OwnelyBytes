@@ -41,6 +41,11 @@ fun MenuCatalogScreen(
 
     var itemToEdit by remember { mutableStateOf<MenuItemEntity?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
+    var currentPage by remember { mutableStateOf(0) }
+
+    LaunchedEffect(searchQuery, selectedCategory) {
+        currentPage = 0
+    }
 
     Scaffold(
         topBar = {
@@ -149,18 +154,79 @@ fun MenuCatalogScreen(
                     Text("No items found matching your search", color = TextSecondary)
                 }
             } else {
+                val pageSize = 6
+                val totalPages = maxOf(1, (items.size + pageSize - 1) / pageSize)
+                val safePage = currentPage.coerceIn(0, totalPages - 1)
+                val startIndex = safePage * pageSize
+                val endIndex = minOf(startIndex + pageSize, items.size)
+                val paginatedItems = remember(items, safePage) {
+                    items.subList(startIndex, endIndex)
+                }
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(items, key = { it.id }) { item ->
+                    items(paginatedItems, key = { it.id }) { item ->
                         MenuItemCard(
                             item = item,
                             onEditClick = { itemToEdit = item },
                             onToggleAvailability = { viewModel.toggleAvailability(item) }
                         )
                     }
+
+                    // Pagination Navigation Bar
+                    item {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    "Showing ${startIndex + 1}–$endIndex of ${items.size} items",
+                                    fontSize = 12.sp,
+                                    color = TextSecondary
+                                )
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    OutlinedIconButton(
+                                        onClick = { if (safePage > 0) currentPage = safePage - 1 },
+                                        enabled = safePage > 0,
+                                        modifier = Modifier.size(34.dp)
+                                    ) {
+                                        Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Page", modifier = Modifier.size(18.dp))
+                                    }
+
+                                    Text(
+                                        "${safePage + 1}/$totalPages",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 4.dp)
+                                    )
+
+                                    OutlinedIconButton(
+                                        onClick = { if (safePage < totalPages - 1) currentPage = safePage + 1 },
+                                        enabled = safePage < totalPages - 1,
+                                        modifier = Modifier.size(34.dp)
+                                    ) {
+                                        Icon(Icons.Default.ChevronRight, contentDescription = "Next Page", modifier = Modifier.size(18.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     item { Spacer(modifier = Modifier.height(64.dp)) }
                 }
             }
