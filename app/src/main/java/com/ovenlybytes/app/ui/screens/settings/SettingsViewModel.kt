@@ -118,6 +118,18 @@ class SettingsViewModel(
         }
     }
 
+    fun clearAllOrdersAndTransactions() {
+        viewModelScope.launch {
+            _backupUiState.value = BackupUiState.Loading
+            try {
+                repository.clearAllOrdersAndTransactions()
+                _backupUiState.value = BackupUiState.Success("Transactions cleared successfully. Master Menu Catalog, Stock Supplies, and Shop Details preserved.")
+            } catch (e: Exception) {
+                _backupUiState.value = BackupUiState.Error("Failed to clear transactions: ${e.localizedMessage}")
+            }
+        }
+    }
+
     fun resetBackupUiState() {
         _backupUiState.value = BackupUiState.Idle
     }

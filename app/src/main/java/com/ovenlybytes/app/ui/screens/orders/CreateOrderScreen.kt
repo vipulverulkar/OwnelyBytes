@@ -1,11 +1,14 @@
 package com.ovenlybytes.app.ui.screens.orders
 
+import android.Manifest
 import android.app.DatePickerDialog
+import android.content.pm.PackageManager
 import android.provider.ContactsContract
 import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -128,6 +131,37 @@ fun CreateOrderScreen(
             } catch (e: Exception) {
                 Toast.makeText(context, "Failed to read contact: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    val requestContactsPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            try {
+                pickContactLauncher.launch(null)
+            } catch (e: Exception) {
+                Toast.makeText(context, "Could not launch contact picker", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(context, "Contacts permission is required to import from phonebook", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun launchContactPicker() {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_CONTACTS
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            try {
+                pickContactLauncher.launch(null)
+            } catch (e: Exception) {
+                Toast.makeText(context, "Unable to launch contact picker", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            requestContactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
         }
     }
 
@@ -424,7 +458,7 @@ fun CreateOrderScreen(
                                 horizontalArrangement = Arrangement.End
                             ) {
                                 TextButton(
-                                    onClick = { pickContactLauncher.launch(null) },
+                                    onClick = { launchContactPicker() },
                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                                 ) {
                                     Icon(
@@ -449,7 +483,7 @@ fun CreateOrderScreen(
                                 label = { Text("Customer Name *") },
                                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                                 trailingIcon = {
-                                    IconButton(onClick = { pickContactLauncher.launch(null) }) {
+                                    IconButton(onClick = { launchContactPicker() }) {
                                         Icon(
                                             Icons.Default.Contacts,
                                             contentDescription = "Pick Contact",
@@ -1152,7 +1186,20 @@ fun AddMenuItemDialog(
         if (selectedMenuItem?.isSeasonalRate == true && customPriceText.isNotBlank()) {
             customPriceText.toDoubleOrNull() ?: 0.0
         } else if (selectedMenuItem != null) {
-            if (selectedVariant == selectedMenuItem?.size1Name) selectedMenuItem!!.price1 else selectedMenuItem!!.price2
+            val item = selectedMenuItem!!
+            val base1KgPrice = if (item.price2 > 0) item.price2 else item.price1 * 2.0
+            val baseHalfKgPrice = if (item.price1 > 0) item.price1 else item.price2 / 2.0
+            val base2KgPrice = if (item.price3 > 0) item.price3 else base1KgPrice * 2.0
+
+            when (selectedVariant) {
+                item.size1Name, "½ KG", "250 g" -> baseHalfKgPrice
+                item.size2Name, "1 KG", "500 g" -> base1KgPrice
+                "1.5 KG" -> base1KgPrice * 1.5
+                item.size3Name, "2 KG" -> base2KgPrice
+                "2.5 KG" -> base1KgPrice * 2.5
+                "3 KG" -> base1KgPrice * 3.0
+                else -> item.price1
+            }
         } else 0.0
     }
 
@@ -1256,21 +1303,38 @@ fun AddMenuItemDialog(
                             if (isSelected) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    FilterChip(
-                                        selected = selectedVariant == item.size1Name,
-                                        onClick = { selectedVariant = item.size1Name },
-                                        label = { Text("${item.size1Name} (₹${item.price1.toInt()})", fontSize = 11.sp) },
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    FilterChip(
-                                        selected = selectedVariant == item.size2Name,
-                                        onClick = { selectedVariant = item.size2Name },
-                                        label = { Text("${item.size2Name} (₹${item.price2.toInt()})", fontSize = 11.sp) },
-                                        modifier = Modifier.weight(1f)
-                                    )
+                                    val variantsList = listOf(
+                                        item.size1Name,
+                                        item.size2Name,
+                                        "1.5 KG",
+                                        item.size3Name,
+                                        "2.5 KG",
+                                        "3 KG"
+                                    ).distinct()
+
+                                    val base1KgPrice = if (item.price2 > 0) item.price2 else item.price1 * 2.0
+
+                                    variantsList.forEach { variantLabel ->
+                                        val vPrice = when (variantLabel) {
+                                            item.size1Name -> item.price1
+                                            item.size2Name -> item.price2
+                                            "1.5 KG" -> base1KgPrice * 1.5
+                                            item.size3Name -> if (item.price3 > 0) item.price3 else base1KgPrice * 2.0
+                                            "2.5 KG" -> base1KgPrice * 2.5
+                                            "3 KG" -> base1KgPrice * 3.0
+                                            else -> item.price1
+                                        }
+                                        FilterChip(
+                                            selected = selectedVariant == variantLabel,
+                                            onClick = { selectedVariant = variantLabel },
+                                            label = { Text("$variantLabel (₹${vPrice.toInt()})", fontSize = 11.sp) }
+                                        )
+                                    }
                                 }
                                 if (item.isSeasonalRate) {
                                     Spacer(modifier = Modifier.height(6.dp))

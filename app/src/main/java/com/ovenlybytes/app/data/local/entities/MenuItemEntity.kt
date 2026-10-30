@@ -15,6 +15,8 @@ data class MenuItemEntity(
     val price1: Double = 0.0,
     val size2Name: String = "1 KG",
     val price2: Double = 0.0,
+    val size3Name: String = "2 KG",
+    val price3: Double = 0.0,
     val isSeasonalRate: Boolean = false,
     val isAvailable: Boolean = true
 )

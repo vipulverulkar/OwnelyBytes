@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
         OrderItemEntity::class,
         InventoryEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class OvenlyDatabase : RoomDatabase() {
@@ -84,7 +84,9 @@ abstract class OvenlyDatabase : RoomDatabase() {
                     size1Name = "½ KG",
                     price1 = 550.0,
                     size2Name = "1 KG",
-                    price2 = 950.0
+                    price2 = 950.0,
+                    size3Name = "2 KG",
+                    price3 = 1800.0
                 ),
                 MenuItemEntity(
                     name = "Pineapple Cake",
@@ -93,7 +95,9 @@ abstract class OvenlyDatabase : RoomDatabase() {
                     size1Name = "½ KG",
                     price1 = 600.0,
                     size2Name = "1 KG",
-                    price2 = 1050.0
+                    price2 = 1050.0,
+                    size3Name = "2 KG",
+                    price3 = 2000.0
                 ),
                 MenuItemEntity(
                     name = "Black Forest Cake",
@@ -102,7 +106,9 @@ abstract class OvenlyDatabase : RoomDatabase() {
                     size1Name = "½ KG",
                     price1 = 600.0,
                     size2Name = "1 KG",
-                    price2 = 1050.0
+                    price2 = 1050.0,
+                    size3Name = "2 KG",
+                    price3 = 2000.0
                 ),
                 MenuItemEntity(
                     name = "Butterscotch Cake",
@@ -111,7 +117,9 @@ abstract class OvenlyDatabase : RoomDatabase() {
                     size1Name = "½ KG",
                     price1 = 600.0,
                     size2Name = "1 KG",
-                    price2 = 1100.0
+                    price2 = 1100.0,
+                    size3Name = "2 KG",
+                    price3 = 2100.0
                 ),
                 MenuItemEntity(
                     name = "Strawberry Cake",
@@ -120,7 +128,9 @@ abstract class OvenlyDatabase : RoomDatabase() {
                     size1Name = "½ KG",
                     price1 = 600.0,
                     size2Name = "1 KG",
-                    price2 = 1050.0
+                    price2 = 1050.0,
+                    size3Name = "2 KG",
+                    price3 = 2000.0
                 ),
                 MenuItemEntity(
                     name = "Red Velvet Cake",
@@ -129,7 +139,9 @@ abstract class OvenlyDatabase : RoomDatabase() {
                     size1Name = "½ KG",
                     price1 = 700.0,
                     size2Name = "1 KG",
-                    price2 = 1250.0
+                    price2 = 1250.0,
+                    size3Name = "2 KG",
+                    price3 = 2400.0
                 ),
                 MenuItemEntity(
                     name = "Blueberry Cake",
@@ -138,7 +150,9 @@ abstract class OvenlyDatabase : RoomDatabase() {
                     size1Name = "½ KG",
                     price1 = 650.0,
                     size2Name = "1 KG",
-                    price2 = 1200.0
+                    price2 = 1200.0,
+                    size3Name = "2 KG",
+                    price3 = 2300.0
                 ),
                 MenuItemEntity(
                     name = "Mango Cake (Seasonal)",
@@ -148,6 +162,8 @@ abstract class OvenlyDatabase : RoomDatabase() {
                     price1 = 700.0,
                     size2Name = "1 KG",
                     price2 = 1300.0,
+                    size3Name = "2 KG",
+                    price3 = 2500.0,
                     isSeasonalRate = true
                 ),
                 MenuItemEntity(
@@ -158,10 +174,12 @@ abstract class OvenlyDatabase : RoomDatabase() {
                     price1 = 750.0,
                     size2Name = "1 KG",
                     price2 = 1400.0,
+                    size3Name = "2 KG",
+                    price3 = 2700.0,
                     isSeasonalRate = true
                 ),
 
-                // Premium Collection (1/2 KG & 1 KG)
+                // Premium Collection (1/2 KG & 1 KG & 2 KG)
                 MenuItemEntity(
                     name = "Rasmalai Cake",
                     category = MenuCategory.PREMIUM_COLLECTION.name,
@@ -169,7 +187,9 @@ abstract class OvenlyDatabase : RoomDatabase() {
                     size1Name = "½ KG",
                     price1 = 800.0,
                     size2Name = "1 KG",
-                    price2 = 1500.0
+                    price2 = 1500.0,
+                    size3Name = "2 KG",
+                    price3 = 2900.0
                 ),
                 MenuItemEntity(
                     name = "Chocolate Truffle Cake",
@@ -178,7 +198,9 @@ abstract class OvenlyDatabase : RoomDatabase() {
                     size1Name = "½ KG",
                     price1 = 750.0,
                     size2Name = "1 KG",
-                    price2 = 1400.0
+                    price2 = 1400.0,
+                    size3Name = "2 KG",
+                    price3 = 2700.0
                 ),
                 MenuItemEntity(
                     name = "Biscoff Chocolate Cake",

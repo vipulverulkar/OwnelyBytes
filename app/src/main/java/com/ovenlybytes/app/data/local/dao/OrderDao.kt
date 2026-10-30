@@ -63,6 +63,17 @@ interface OrderDao {
         return orderId
     }
 
+    @Query("DELETE FROM order_items WHERE orderId = :orderId")
+    suspend fun deleteOrderItemsForOrder(orderId: Long)
+
+    @Transaction
+    suspend fun updateOrderWithItems(order: OrderEntity, items: List<OrderItemEntity>) {
+        updateOrder(order)
+        deleteOrderItemsForOrder(order.id)
+        val itemsWithOrderId = items.map { it.copy(orderId = order.id) }
+        insertOrderItems(itemsWithOrderId)
+    }
+
     @Query("SELECT * FROM orders")
     suspend fun getAllOrdersDirect(): List<OrderEntity>
 

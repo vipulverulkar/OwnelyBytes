@@ -113,6 +113,13 @@ class OrdersViewModel(
         return repository.createOrder(orderToInsert, items)
     }
 
+    suspend fun updateOrderWithItems(
+        order: OrderEntity,
+        items: List<OrderItemEntity>
+    ) {
+        repository.updateOrderWithItems(order, items)
+    }
+
     fun getOrderDetails(orderId: Long): Flow<OrderWithCustomerAndItems?> {
         return repository.getOrderWithDetails(orderId)
     }

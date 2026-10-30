@@ -42,6 +42,7 @@ fun SettingsScreen(
     val backupUiState by viewModel.backupUiState.collectAsState()
 
     var showRestoreConfirmDialog by remember { mutableStateOf(false) }
+    var showClearOrdersDialog by remember { mutableStateOf(false) }
     var pendingRestoreUri by remember { mutableStateOf<android.net.Uri?>(null) }
 
     val dateStr = remember { SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date()) }
@@ -117,6 +118,36 @@ fun SettingsScreen(
             },
             dismissButton = {
                 OutlinedButton(onClick = { showRestoreConfirmDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Clear Orders Confirmation Dialog
+    if (showClearOrdersDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearOrdersDialog = false },
+            icon = { Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = BalanceDueColor) },
+            title = { Text("Clear Orders & Transactions?", fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "This action will remove all sample and live order records, order items, and sales financial statistics.\n\nYour shop profile, customer directory, and menu catalog will remain intact."
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showClearOrdersDialog = false
+                        viewModel.clearAllOrdersAndTransactions()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = BalanceDueColor)
+                ) {
+                    Text("Clear Transactions")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showClearOrdersDialog = false }) {
                     Text("Cancel")
                 }
             }
@@ -632,6 +663,51 @@ fun SettingsScreen(
                                     Text("Select Backup File (.sql / .csv / .json)")
                                 }
                             }
+                        }
+                    }
+                }
+
+                // SECTION: CLEAR DATA & RESET
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = BalanceDueColor)
+                            Text(
+                                text = "Clear Data & Reset",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                            )
+                        }
+
+                        HorizontalDivider(color = WarmBorder)
+
+                        Text(
+                            "Remove sample/demo records or wipe database before live bakery operations:",
+                            style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
+                        )
+
+                        // Clear Orders & Transactions Button
+                        OutlinedButton(
+                            onClick = { showClearOrdersDialog = true },
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.ReceiptLong, contentDescription = null, tint = BalanceDueColor, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Clear All Orders & Transactions", color = BalanceDueColor, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }

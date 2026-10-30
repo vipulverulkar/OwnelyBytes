@@ -39,6 +39,9 @@ class BakeryRepository(
     suspend fun createOrder(order: OrderEntity, items: List<OrderItemEntity>): Long =
         orderDao.createOrderWithItems(order, items)
 
+    suspend fun updateOrderWithItems(order: OrderEntity, items: List<OrderItemEntity>) =
+        orderDao.updateOrderWithItems(order, items)
+
     suspend fun updateOrderStatus(orderId: Long, status: OrderStatus) =
         orderDao.updateOrderStatus(orderId, status.name)
 
@@ -188,6 +191,11 @@ class BakeryRepository(
 
     suspend fun getAllOrderItemsDirect(): List<OrderItemEntity> =
         orderDao.getAllOrderItemsDirect()
+
+    suspend fun clearAllOrdersAndTransactions() {
+        orderDao.deleteAllOrderItems()
+        orderDao.deleteAllOrders()
+    }
 
     suspend fun restoreFullBackup(
         customers: List<CustomerEntity>,

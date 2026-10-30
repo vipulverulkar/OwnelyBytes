@@ -1,9 +1,12 @@
 package com.ovenlybytes.app.ui.screens.customers
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.provider.ContactsContract
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -435,6 +438,37 @@ fun CustomerFormDialog(
         }
     }
 
+    val requestContactsPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            try {
+                pickContactLauncher.launch(null)
+            } catch (e: Exception) {
+                Toast.makeText(context, "Could not launch contact picker", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(context, "Contacts permission is required to import from phonebook", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun launchContactPicker() {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_CONTACTS
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            try {
+                pickContactLauncher.launch(null)
+            } catch (e: Exception) {
+                Toast.makeText(context, "Unable to launch contact picker", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            requestContactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -445,7 +479,7 @@ fun CustomerFormDialog(
             ) {
                 Text(if (customer != null) "Edit Customer" else "Add New Customer", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 TextButton(
-                    onClick = { pickContactLauncher.launch(null) },
+                    onClick = { launchContactPicker() },
                     contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Icon(Icons.Default.Contacts, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -461,7 +495,7 @@ fun CustomerFormDialog(
                     onValueChange = { name = it },
                     label = { Text("Full Name *") },
                     trailingIcon = {
-                        IconButton(onClick = { pickContactLauncher.launch(null) }) {
+                        IconButton(onClick = { launchContactPicker() }) {
                             Icon(Icons.Default.Contacts, contentDescription = "Pick Contact", tint = MaterialTheme.colorScheme.primary)
                         }
                     },
