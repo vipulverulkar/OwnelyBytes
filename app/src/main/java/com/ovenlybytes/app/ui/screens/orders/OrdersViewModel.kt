@@ -14,6 +14,15 @@ import com.ovenlybytes.app.model.PaymentStatus
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+enum class OrderSortOption(val displayName: String) {
+    DELIVERY_DATE_ASC("Delivery Date (Earliest First)"),
+    DELIVERY_DATE_DESC("Delivery Date (Latest First)"),
+    ORDER_ID_DESC("Newest Order (#OB Max)"),
+    ORDER_ID_ASC("Oldest Order (#OB Min)"),
+    TOTAL_AMOUNT_DESC("Total Amount (High to Low)"),
+    BALANCE_DUE_DESC("Balance Due (High to Low)")
+}
+
 class OrdersViewModel(
     private val repository: BakeryRepository
 ) : ViewModel() {
@@ -26,6 +35,9 @@ class OrdersViewModel(
 
     private val _selectedStatusFilter = MutableStateFlow("ALL") // ALL, RECEIVED, BAKING, READY, DELIVERED
     val selectedStatusFilter: StateFlow<String> = _selectedStatusFilter.asStateFlow()
+
+    private val _selectedSortOption = MutableStateFlow(OrderSortOption.DELIVERY_DATE_ASC)
+    val selectedSortOption: StateFlow<OrderSortOption> = _selectedSortOption.asStateFlow()
 
     val customers: StateFlow<List<CustomerEntity>> = repository.allCustomers.stateIn(
         scope = viewModelScope,
@@ -43,9 +55,10 @@ class OrdersViewModel(
         repository.allOrdersWithDetails,
         _searchQuery,
         _selectedChannelFilter,
-        _selectedStatusFilter
-    ) { orders, query, channel, status ->
-        orders.filter { item ->
+        _selectedStatusFilter,
+        _selectedSortOption
+    ) { orders, query, channel, status, sortOption ->
+        val filtered = orders.filter { item ->
             val matchesQuery = query.isBlank() ||
                     item.customer?.name?.contains(query, ignoreCase = true) == true ||
                     item.customer?.phone?.contains(query, ignoreCase = true) == true ||
@@ -56,6 +69,15 @@ class OrdersViewModel(
             val matchesStatus = status == "ALL" || item.order.orderStatus.equals(status, ignoreCase = true)
 
             matchesQuery && matchesChannel && matchesStatus
+        }
+
+        when (sortOption) {
+            OrderSortOption.DELIVERY_DATE_ASC -> filtered.sortedWith(compareBy({ it.order.deliveryDate }, { -it.order.id }))
+            OrderSortOption.DELIVERY_DATE_DESC -> filtered.sortedWith(compareBy({ -it.order.deliveryDate }, { -it.order.id }))
+            OrderSortOption.ORDER_ID_DESC -> filtered.sortedByDescending { it.order.id }
+            OrderSortOption.ORDER_ID_ASC -> filtered.sortedBy { it.order.id }
+            OrderSortOption.TOTAL_AMOUNT_DESC -> filtered.sortedByDescending { it.order.totalAmount }
+            OrderSortOption.BALANCE_DUE_DESC -> filtered.sortedByDescending { it.order.balanceDue }
         }
     }.stateIn(
         scope = viewModelScope,
@@ -73,6 +95,10 @@ class OrdersViewModel(
 
     fun onStatusFilterChanged(status: String) {
         _selectedStatusFilter.value = status
+    }
+
+    fun onSortOptionChanged(option: OrderSortOption) {
+        _selectedSortOption.value = option
     }
 
     fun updateOrderStatus(orderId: Long, newStatus: OrderStatus) {

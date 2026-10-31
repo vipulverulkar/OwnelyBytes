@@ -42,12 +42,14 @@ fun OrdersListScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedChannel by viewModel.selectedChannelFilter.collectAsState()
     val selectedStatus by viewModel.selectedStatusFilter.collectAsState()
+    val selectedSortOption by viewModel.selectedSortOption.collectAsState()
 
     var isSearchExpanded by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
     var currentPage by remember { mutableStateOf(0) }
 
     // Reset page whenever filters change
-    LaunchedEffect(searchQuery, selectedChannel, selectedStatus) {
+    LaunchedEffect(searchQuery, selectedChannel, selectedStatus, selectedSortOption) {
         currentPage = 0
     }
 
@@ -86,6 +88,40 @@ fun OrdersListScreen(
                     }
                 },
                 actions = {
+                    Box {
+                        IconButton(onClick = { showSortMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Sort,
+                                contentDescription = "Sort Orders"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showSortMenu,
+                            onDismissRequest = { showSortMenu = false }
+                        ) {
+                            OrderSortOption.entries.forEach { option ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            option.displayName,
+                                            fontWeight = if (selectedSortOption == option) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (selectedSortOption == option) PrimaryCocoa else TextPrimary,
+                                            fontSize = 13.sp
+                                        )
+                                    },
+                                    onClick = {
+                                        viewModel.onSortOptionChanged(option)
+                                        showSortMenu = false
+                                    },
+                                    leadingIcon = {
+                                        if (selectedSortOption == option) {
+                                            Icon(Icons.Default.Check, contentDescription = null, tint = PrimaryCocoa, modifier = Modifier.size(18.dp))
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
                     IconButton(onClick = {
                         isSearchExpanded = !isSearchExpanded
                         if (!isSearchExpanded) viewModel.onSearchQueryChanged("")
@@ -161,7 +197,7 @@ fun OrdersListScreen(
                 )
             }
 
-            // Status Filter Chips
+            // Status & Sort Filter Chips
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -170,6 +206,18 @@ fun OrdersListScreen(
                     .padding(horizontal = 16.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
+                // Sort Option Quick Chip
+                AssistChip(
+                    onClick = { showSortMenu = true },
+                    label = { Text("Sort: ${selectedSortOption.displayName.substringBefore(" (")}", fontSize = 12.sp, fontWeight = FontWeight.Bold) },
+                    trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = PrimaryCocoa.copy(alpha = 0.1f),
+                        labelColor = PrimaryCocoa
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryCocoa)
+                )
+
                 listOf(
                     "ALL" to "All Status",
                     OrderStatus.RECEIVED.name to "Received",

@@ -561,6 +561,7 @@ object BackupManager {
                     put("price2", m.price2)
                     put("size3Name", m.size3Name)
                     put("price3", m.price3)
+                    put("customVariantsJson", m.customVariantsJson)
                     put("isSeasonalRate", m.isSeasonalRate)
                     put("isAvailable", m.isAvailable)
                 })
@@ -709,6 +710,7 @@ object BackupManager {
                             price2 = obj.optDouble("price2", 0.0),
                             size3Name = obj.optString("size3Name", "2 KG"),
                             price3 = obj.optDouble("price3", 0.0),
+                            customVariantsJson = obj.optString("customVariantsJson", ""),
                             isSeasonalRate = obj.optBoolean("isSeasonalRate", false),
                             isAvailable = obj.optBoolean("isAvailable", true)
                         )

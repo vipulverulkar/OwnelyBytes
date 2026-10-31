@@ -24,6 +24,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ovenlybytes.app.data.local.entities.MenuItemEntity
+import com.ovenlybytes.app.data.local.entities.PortionVariant
+import com.ovenlybytes.app.data.local.entities.getAllVariants
+import com.ovenlybytes.app.data.local.entities.createCustomVariantsJson
 import com.ovenlybytes.app.model.MenuCategory
 import com.ovenlybytes.app.ui.components.OvenlyTopAppBar
 import com.ovenlybytes.app.ui.theme.*
@@ -423,55 +426,27 @@ fun MenuItemCard(
                         }
                     }
                 } else {
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = WarmCream,
+                    val variants = remember(item) { item.getAllVariants() }
+                    Row(
                         modifier = Modifier
-                            .weight(1f)
-                            .border(0.8.dp, WarmBorder, RoundedCornerShape(8.dp))
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(item.size1Name, fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
-                            Text("₹${item.price1.toInt()}", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = PrimaryCocoa)
-                        }
-                    }
-
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = WarmCream,
-                        modifier = Modifier
-                            .weight(1f)
-                            .border(0.8.dp, WarmBorder, RoundedCornerShape(8.dp))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(item.size2Name, fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
-                            Text("₹${item.price2.toInt()}", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = PrimaryCocoa)
-                        }
-                    }
-
-                    if (item.price3 > 0) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = WarmCream,
-                            modifier = Modifier
-                                .weight(1f)
-                                .border(0.8.dp, WarmBorder, RoundedCornerShape(8.dp))
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                        variants.forEach { v ->
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = WarmCream,
+                                modifier = Modifier.border(0.8.dp, WarmBorder, RoundedCornerShape(8.dp))
                             ) {
-                                Text(item.size3Name, fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
-                                Text("₹${item.price3.toInt()}", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = PrimaryCocoa)
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(v.name, fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
+                                    Text("₹${v.price.toInt()}", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = PrimaryCocoa)
+                                }
                             }
                         }
                     }
@@ -495,12 +470,7 @@ fun EditMenuPriceDialog(
     }
     var description by remember { mutableStateOf(item.description) }
     var isEggless by remember { mutableStateOf(item.isEggless) }
-    var size1Name by remember { mutableStateOf(item.size1Name) }
-    var price1Text by remember { mutableStateOf(if (item.price1 > 0) item.price1.toInt().toString() else "") }
-    var size2Name by remember { mutableStateOf(item.size2Name) }
-    var price2Text by remember { mutableStateOf(if (item.price2 > 0) item.price2.toInt().toString() else "") }
-    var size3Name by remember { mutableStateOf(item.size3Name) }
-    var price3Text by remember { mutableStateOf(if (item.price3 > 0) item.price3.toInt().toString() else "") }
+    var customVariants by remember { mutableStateOf(item.getAllVariants()) }
     var isSeasonal by remember { mutableStateOf(item.isSeasonalRate) }
 
     AlertDialog(
@@ -587,89 +557,77 @@ fun EditMenuPriceDialog(
                 if (!isSeasonal) {
                     Text("Pricing & Portion Sizes (Custom Values)", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa))
 
-                    // Preset chips
+                    // Preset chips to add a quick variant
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        listOf("250 g", "500 g", "1 KG", "1.5 KG", "2 KG").forEach { preset ->
+                        listOf("250 g", "500 g", "1 KG", "1.5 KG", "2 KG", "Custom").forEach { preset ->
                             SuggestionChip(
                                 onClick = {
-                                    if (size1Name.isBlank() || size1Name == "½ KG" || size1Name == "500 g") size1Name = preset
-                                    else if (size2Name.isBlank() || size2Name == "1 KG") size2Name = preset
-                                    else size3Name = preset
+                                    customVariants = customVariants + com.ovenlybytes.app.data.local.entities.PortionVariant(preset, 0.0)
                                 },
-                                label = { Text(preset, fontSize = 11.sp) }
+                                label = { Text("+ $preset", fontSize = 11.sp) }
                             )
                         }
                     }
 
-                    // Variant 1
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = size1Name,
-                            onValueChange = { size1Name = it },
-                            label = { Text("Size / Variant 1") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        OutlinedTextField(
-                            value = price1Text,
-                            onValueChange = { price1Text = it },
-                            label = { Text("Price 1 (₹)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
+                    // Dynamic Variant Rows
+                    customVariants.forEachIndexed { index, variant ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = variant.name,
+                                onValueChange = { newName ->
+                                    val list = customVariants.toMutableList()
+                                    list[index] = list[index].copy(name = newName)
+                                    customVariants = list
+                                },
+                                label = { Text("Variant ${index + 1}") },
+                                modifier = Modifier.weight(1.2f),
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = if (variant.price > 0) variant.price.toInt().toString() else "",
+                                onValueChange = { newPriceText ->
+                                    val list = customVariants.toMutableList()
+                                    list[index] = list[index].copy(price = newPriceText.toDoubleOrNull() ?: 0.0)
+                                    customVariants = list
+                                },
+                                label = { Text("Price (₹)") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f),
+                                singleLine = true
+                            )
+                            if (customVariants.size > 1) {
+                                IconButton(
+                                    onClick = {
+                                        val list = customVariants.toMutableList()
+                                        list.removeAt(index)
+                                        customVariants = list
+                                    },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(Icons.Default.DeleteOutline, contentDescription = "Delete Variant", tint = BalanceDueColor)
+                                }
+                            }
+                        }
                     }
 
-                    // Variant 2
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    OutlinedButton(
+                        onClick = {
+                            customVariants = customVariants + com.ovenlybytes.app.data.local.entities.PortionVariant("Custom ${customVariants.size + 1}", 0.0)
+                        },
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        OutlinedTextField(
-                            value = size2Name,
-                            onValueChange = { size2Name = it },
-                            label = { Text("Size / Variant 2") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        OutlinedTextField(
-                            value = price2Text,
-                            onValueChange = { price2Text = it },
-                            label = { Text("Price 2 (₹)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                    }
-
-                    // Variant 3 / Custom Portion
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = size3Name,
-                            onValueChange = { size3Name = it },
-                            label = { Text("Size / Variant 3 (Custom)") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        OutlinedTextField(
-                            value = price3Text,
-                            onValueChange = { price3Text = it },
-                            label = { Text("Price 3 (₹)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("+ Add Custom Portion / Price", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             }
@@ -677,18 +635,24 @@ fun EditMenuPriceDialog(
         confirmButton = {
             Button(
                 onClick = {
+                    val finalJson = com.ovenlybytes.app.data.local.entities.createCustomVariantsJson(customVariants)
+                    val v0 = customVariants.getOrNull(0)
+                    val v1 = customVariants.getOrNull(1)
+                    val v2 = customVariants.getOrNull(2)
+
                     onSave(
                         item.copy(
                             name = name.trim().ifBlank { item.name },
                             category = category.name,
                             description = description.trim(),
                             isEggless = isEggless,
-                            size1Name = size1Name.ifBlank { item.size1Name },
-                            price1 = price1Text.toDoubleOrNull() ?: item.price1,
-                            size2Name = size2Name.ifBlank { item.size2Name },
-                            price2 = price2Text.toDoubleOrNull() ?: item.price2,
-                            size3Name = size3Name.ifBlank { "2 KG" },
-                            price3 = price3Text.toDoubleOrNull() ?: 0.0,
+                            size1Name = v0?.name?.ifBlank { "500 g" } ?: "500 g",
+                            price1 = v0?.price ?: 0.0,
+                            size2Name = v1?.name?.ifBlank { "1 KG" } ?: "1 KG",
+                            price2 = v1?.price ?: 0.0,
+                            size3Name = v2?.name?.ifBlank { "2 KG" } ?: "2 KG",
+                            price3 = v2?.price ?: 0.0,
+                            customVariantsJson = finalJson,
                             isSeasonalRate = isSeasonal
                         )
                     )
@@ -715,12 +679,14 @@ fun AddNewMenuItemDialog(
     var name by remember { mutableStateOf("") }
     var category by remember { mutableStateOf(MenuCategory.CLASSIC_CAKES) }
     var description by remember { mutableStateOf("") }
-    var size1Name by remember { mutableStateOf("500 g") }
-    var size2Name by remember { mutableStateOf("1 KG") }
-    var size3Name by remember { mutableStateOf("2 KG") }
-    var price1Text by remember { mutableStateOf("") }
-    var price2Text by remember { mutableStateOf("") }
-    var price3Text by remember { mutableStateOf("") }
+    var customVariants by remember {
+        mutableStateOf(
+            listOf(
+                com.ovenlybytes.app.data.local.entities.PortionVariant("500 g", 0.0),
+                com.ovenlybytes.app.data.local.entities.PortionVariant("1 KG", 0.0)
+            )
+        )
+    }
     var isEggless by remember { mutableStateOf(true) }
     var isSeasonal by remember { mutableStateOf(false) }
 
@@ -765,13 +731,15 @@ fun AddNewMenuItemDialog(
                                 onClick = {
                                     category = cat
                                     if (cat == MenuCategory.BROWNIES || cat == MenuCategory.TEA_CAKES || cat == MenuCategory.COOKIES) {
-                                        size1Name = "250 g"
-                                        size2Name = "500 g"
-                                        size3Name = "1 KG"
+                                        customVariants = listOf(
+                                            com.ovenlybytes.app.data.local.entities.PortionVariant("250 g", 0.0),
+                                            com.ovenlybytes.app.data.local.entities.PortionVariant("500 g", 0.0)
+                                        )
                                     } else {
-                                        size1Name = "500 g"
-                                        size2Name = "1 KG"
-                                        size3Name = "2 KG"
+                                        customVariants = listOf(
+                                            com.ovenlybytes.app.data.local.entities.PortionVariant("500 g", 0.0),
+                                            com.ovenlybytes.app.data.local.entities.PortionVariant("1 KG", 0.0)
+                                        )
                                     }
                                 },
                                 label = { Text(cat.displayName, fontSize = 11.sp) },
@@ -830,82 +798,70 @@ fun AddNewMenuItemDialog(
                             .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        listOf("250 g", "500 g", "1 KG", "1.5 KG", "2 KG").forEach { preset ->
+                        listOf("250 g", "500 g", "1 KG", "1.5 KG", "2 KG", "Custom").forEach { preset ->
                             SuggestionChip(
                                 onClick = {
-                                    if (size1Name.isBlank()) size1Name = preset
-                                    else if (size2Name.isBlank()) size2Name = preset
-                                    else size3Name = preset
+                                    customVariants = customVariants + com.ovenlybytes.app.data.local.entities.PortionVariant(preset, 0.0)
                                 },
-                                label = { Text(preset, fontSize = 11.sp) }
+                                label = { Text("+ $preset", fontSize = 11.sp) }
                             )
                         }
                     }
 
-                    // Variant 1 Name & Price
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = size1Name,
-                            onValueChange = { size1Name = it },
-                            label = { Text("Size 1 (e.g. 500 g / ½ KG)") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        OutlinedTextField(
-                            value = price1Text,
-                            onValueChange = { price1Text = it },
-                            label = { Text("Price 1 (₹)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
+                    // Dynamic Variant Rows
+                    customVariants.forEachIndexed { index, variant ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = variant.name,
+                                onValueChange = { newName ->
+                                    val list = customVariants.toMutableList()
+                                    list[index] = list[index].copy(name = newName)
+                                    customVariants = list
+                                },
+                                label = { Text("Variant ${index + 1}") },
+                                modifier = Modifier.weight(1.2f),
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = if (variant.price > 0) variant.price.toInt().toString() else "",
+                                onValueChange = { newPriceText ->
+                                    val list = customVariants.toMutableList()
+                                    list[index] = list[index].copy(price = newPriceText.toDoubleOrNull() ?: 0.0)
+                                    customVariants = list
+                                },
+                                label = { Text("Price (₹)") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f),
+                                singleLine = true
+                            )
+                            if (customVariants.size > 1) {
+                                IconButton(
+                                    onClick = {
+                                        val list = customVariants.toMutableList()
+                                        list.removeAt(index)
+                                        customVariants = list
+                                    },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(Icons.Default.DeleteOutline, contentDescription = "Delete Variant", tint = BalanceDueColor)
+                                }
+                            }
+                        }
                     }
 
-                    // Variant 2 Name & Price
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    OutlinedButton(
+                        onClick = {
+                            customVariants = customVariants + com.ovenlybytes.app.data.local.entities.PortionVariant("Custom ${customVariants.size + 1}", 0.0)
+                        },
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        OutlinedTextField(
-                            value = size2Name,
-                            onValueChange = { size2Name = it },
-                            label = { Text("Size 2 (e.g. 1 KG)") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        OutlinedTextField(
-                            value = price2Text,
-                            onValueChange = { price2Text = it },
-                            label = { Text("Price 2 (₹)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                    }
-
-                    // Variant 3 / Custom Portion Name & Price
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = size3Name,
-                            onValueChange = { size3Name = it },
-                            label = { Text("Size 3 (e.g. 2 KG / Custom)") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        OutlinedTextField(
-                            value = price3Text,
-                            onValueChange = { price3Text = it },
-                            label = { Text("Price 3 (₹)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("+ Add Custom Portion / Price", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             }
@@ -913,18 +869,24 @@ fun AddNewMenuItemDialog(
         confirmButton = {
             Button(
                 onClick = {
+                    val finalJson = com.ovenlybytes.app.data.local.entities.createCustomVariantsJson(customVariants)
+                    val v0 = customVariants.getOrNull(0)
+                    val v1 = customVariants.getOrNull(1)
+                    val v2 = customVariants.getOrNull(2)
+
                     onSave(
                         MenuItemEntity(
                             name = name.trim(),
                             category = category.name,
                             description = description.trim(),
                             isEggless = isEggless,
-                            size1Name = size1Name.ifBlank { "500 g" },
-                            price1 = price1Text.toDoubleOrNull() ?: 0.0,
-                            size2Name = size2Name.ifBlank { "1 KG" },
-                            price2 = price2Text.toDoubleOrNull() ?: 0.0,
-                            size3Name = size3Name.ifBlank { "2 KG" },
-                            price3 = price3Text.toDoubleOrNull() ?: 0.0,
+                            size1Name = v0?.name?.ifBlank { "500 g" } ?: "500 g",
+                            price1 = v0?.price ?: 0.0,
+                            size2Name = v1?.name?.ifBlank { "1 KG" } ?: "1 KG",
+                            price2 = v1?.price ?: 0.0,
+                            size3Name = v2?.name?.ifBlank { "2 KG" } ?: "2 KG",
+                            price3 = v2?.price ?: 0.0,
+                            customVariantsJson = finalJson,
                             isSeasonalRate = isSeasonal
                         )
                     )

@@ -38,6 +38,7 @@ import com.ovenlybytes.app.data.local.entities.CustomerEntity
 import com.ovenlybytes.app.data.local.entities.MenuItemEntity
 import com.ovenlybytes.app.data.local.entities.OrderEntity
 import com.ovenlybytes.app.data.local.entities.OrderItemEntity
+import com.ovenlybytes.app.data.local.entities.getAllVariants
 import com.ovenlybytes.app.model.*
 import com.ovenlybytes.app.ui.components.OvenlyTopAppBar
 import com.ovenlybytes.app.ui.theme.*
@@ -1375,17 +1376,19 @@ fun AddMenuItemDialog(
             customPriceText.toDoubleOrNull() ?: 0.0
         } else {
             val item = selectedMenuItem!!
+            val configuredVariants = item.getAllVariants()
+            val matchedConfigured = configuredVariants.find { it.name.equals(selectedVariant, ignoreCase = true) }
+
             val base1KgPrice = if (item.price2 > 0) item.price2 else item.price1 * 2.0
             val baseHalfKgPrice = if (item.price1 > 0) item.price1 else item.price2 / 2.0
-            val base2KgPrice = if (item.price3 > 0) item.price3 else base1KgPrice * 2.0
 
-            when (selectedVariant) {
-                item.size1Name, "½ KG", "250 g" -> baseHalfKgPrice
-                item.size2Name, "1 KG", "500 g" -> base1KgPrice
-                "1.5 KG" -> base1KgPrice * 1.5
-                item.size3Name, "2 KG" -> if (item.price3 > 0) item.price3 else base2KgPrice
-                "2.5 KG" -> base1KgPrice * 2.5
-                "3 KG" -> base1KgPrice * 3.0
+            when {
+                matchedConfigured != null -> matchedConfigured.price
+                selectedVariant == "250 g" -> baseHalfKgPrice / 2.0
+                selectedVariant == "500 g" || selectedVariant == "½ KG" -> baseHalfKgPrice
+                selectedVariant == "1 KG" -> base1KgPrice
+                selectedVariant == "1.5 KG" -> base1KgPrice * 1.5
+                selectedVariant == "2 KG" -> if (item.price3 > 0) item.price3 else base1KgPrice * 2.0
                 else -> item.price1
             }
         }
@@ -1509,32 +1512,32 @@ fun AddMenuItemDialog(
                                             .horizontalScroll(rememberScrollState()),
                                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        val variantsList = buildList {
-                                            if (item.size1Name.isNotBlank()) add(item.size1Name)
-                                            if (item.size2Name.isNotBlank()) add(item.size2Name)
-                                            if (item.size3Name.isNotBlank()) add(item.size3Name)
-                                            add("250 g")
-                                            add("500 g")
-                                            add("1 KG")
-                                            add("1.5 KG")
-                                            add("2 KG")
-                                            add("+ Custom Size / Price")
-                                        }.distinct()
+                                        val configuredVariants = remember(item) { item.getAllVariants() }
+                                        val variantsList = remember(item) {
+                                            buildList {
+                                                configuredVariants.forEach { add(it.name) }
+                                                add("250 g")
+                                                add("500 g")
+                                                add("1 KG")
+                                                add("1.5 KG")
+                                                add("2 KG")
+                                                add("+ Custom Size / Price")
+                                            }.distinct()
+                                        }
 
                                         val base1KgPrice = if (item.price2 > 0) item.price2 else item.price1 * 2.0
                                         val baseHalfKgPrice = if (item.price1 > 0) item.price1 else item.price2 / 2.0
 
                                         variantsList.forEach { variantLabel ->
-                                            val vPrice = when (variantLabel) {
-                                                item.size1Name -> item.price1
-                                                item.size2Name -> item.price2
-                                                item.size3Name -> if (item.price3 > 0) item.price3 else base1KgPrice * 2.0
-                                                "250 g" -> baseHalfKgPrice / 2.0
-                                                "500 g", "½ KG" -> baseHalfKgPrice
-                                                "1 KG" -> base1KgPrice
-                                                "1.5 KG" -> base1KgPrice * 1.5
-                                                "2 KG" -> if (item.price3 > 0) item.price3 else base1KgPrice * 2.0
-                                                "+ Custom Size / Price" -> customPriceText.toDoubleOrNull() ?: 0.0
+                                            val matchedConfigured = configuredVariants.find { it.name.equals(variantLabel, ignoreCase = true) }
+                                            val vPrice = when {
+                                                variantLabel == "+ Custom Size / Price" -> customPriceText.toDoubleOrNull() ?: 0.0
+                                                matchedConfigured != null -> matchedConfigured.price
+                                                variantLabel == "250 g" -> baseHalfKgPrice / 2.0
+                                                variantLabel == "500 g" || variantLabel == "½ KG" -> baseHalfKgPrice
+                                                variantLabel == "1 KG" -> base1KgPrice
+                                                variantLabel == "1.5 KG" -> base1KgPrice * 1.5
+                                                variantLabel == "2 KG" -> if (item.price3 > 0) item.price3 else base1KgPrice * 2.0
                                                 else -> item.price1
                                             }
                                             val chipLabel = if (variantLabel == "+ Custom Size / Price") {
