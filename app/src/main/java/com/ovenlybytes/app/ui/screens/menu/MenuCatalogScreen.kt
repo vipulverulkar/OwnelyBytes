@@ -431,12 +431,12 @@ fun MenuItemCard(
                             .border(0.8.dp, WarmBorder, RoundedCornerShape(8.dp))
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(item.size1Name, fontSize = 12.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
-                            Text("₹${item.price1.toInt()}", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = PrimaryCocoa)
+                            Text(item.size1Name, fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
+                            Text("₹${item.price1.toInt()}", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = PrimaryCocoa)
                         }
                     }
 
@@ -448,12 +448,31 @@ fun MenuItemCard(
                             .border(0.8.dp, WarmBorder, RoundedCornerShape(8.dp))
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(item.size2Name, fontSize = 12.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
-                            Text("₹${item.price2.toInt()}", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = PrimaryCocoa)
+                            Text(item.size2Name, fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
+                            Text("₹${item.price2.toInt()}", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = PrimaryCocoa)
+                        }
+                    }
+
+                    if (item.price3 > 0) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = WarmCream,
+                            modifier = Modifier
+                                .weight(1f)
+                                .border(0.8.dp, WarmBorder, RoundedCornerShape(8.dp))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(item.size3Name, fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Medium)
+                                Text("₹${item.price3.toInt()}", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = PrimaryCocoa)
+                            }
                         }
                     }
                 }
@@ -468,10 +487,20 @@ fun EditMenuPriceDialog(
     onDismiss: () -> Unit,
     onSave: (MenuItemEntity) -> Unit
 ) {
+    var name by remember { mutableStateOf(item.name) }
+    var category by remember {
+        mutableStateOf(
+            runCatching { MenuCategory.valueOf(item.category) }.getOrDefault(MenuCategory.CLASSIC_CAKES)
+        )
+    }
+    var description by remember { mutableStateOf(item.description) }
+    var isEggless by remember { mutableStateOf(item.isEggless) }
     var size1Name by remember { mutableStateOf(item.size1Name) }
-    var price1Text by remember { mutableStateOf(item.price1.toInt().toString()) }
+    var price1Text by remember { mutableStateOf(if (item.price1 > 0) item.price1.toInt().toString() else "") }
     var size2Name by remember { mutableStateOf(item.size2Name) }
-    var price2Text by remember { mutableStateOf(item.price2.toInt().toString()) }
+    var price2Text by remember { mutableStateOf(if (item.price2 > 0) item.price2.toInt().toString() else "") }
+    var size3Name by remember { mutableStateOf(item.size3Name) }
+    var price3Text by remember { mutableStateOf(if (item.price3 > 0) item.price3.toInt().toString() else "") }
     var isSeasonal by remember { mutableStateOf(item.isSeasonalRate) }
 
     AlertDialog(
@@ -484,7 +513,61 @@ fun EditMenuPriceDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text(item.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextPrimary)
+                // Item Name
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Item Name *") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Category Selection
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Category *", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = TextSecondary))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        MenuCategory.entries.forEach { cat ->
+                            FilterChip(
+                                selected = category == cat,
+                                onClick = { category = cat },
+                                label = { Text(cat.displayName, fontSize = 11.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = PrimaryCocoa,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                    }
+                }
+
+                // Description
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description / Flavor Notes") },
+                    minLines = 2,
+                    maxLines = 3,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Eggless Toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("100% Eggless", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    Switch(
+                        checked = isEggless,
+                        onCheckedChange = { isEggless = it },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = EgglessGreen)
+                    )
+                }
 
                 HorizontalDivider(color = WarmBorder)
 
@@ -502,6 +585,27 @@ fun EditMenuPriceDialog(
                 }
 
                 if (!isSeasonal) {
+                    Text("Pricing & Portion Sizes (Custom Values)", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa))
+
+                    // Preset chips
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf("250 g", "500 g", "1 KG", "1.5 KG", "2 KG").forEach { preset ->
+                            SuggestionChip(
+                                onClick = {
+                                    if (size1Name.isBlank() || size1Name == "½ KG" || size1Name == "500 g") size1Name = preset
+                                    else if (size2Name.isBlank() || size2Name == "1 KG") size2Name = preset
+                                    else size3Name = preset
+                                },
+                                label = { Text(preset, fontSize = 11.sp) }
+                            )
+                        }
+                    }
+
                     // Variant 1
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -545,6 +649,28 @@ fun EditMenuPriceDialog(
                             singleLine = true
                         )
                     }
+
+                    // Variant 3 / Custom Portion
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = size3Name,
+                            onValueChange = { size3Name = it },
+                            label = { Text("Size / Variant 3 (Custom)") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = price3Text,
+                            onValueChange = { price3Text = it },
+                            label = { Text("Price 3 (₹)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                    }
                 }
             }
         },
@@ -553,14 +679,21 @@ fun EditMenuPriceDialog(
                 onClick = {
                     onSave(
                         item.copy(
+                            name = name.trim().ifBlank { item.name },
+                            category = category.name,
+                            description = description.trim(),
+                            isEggless = isEggless,
                             size1Name = size1Name.ifBlank { item.size1Name },
                             price1 = price1Text.toDoubleOrNull() ?: item.price1,
                             size2Name = size2Name.ifBlank { item.size2Name },
                             price2 = price2Text.toDoubleOrNull() ?: item.price2,
+                            size3Name = size3Name.ifBlank { "2 KG" },
+                            price3 = price3Text.toDoubleOrNull() ?: 0.0,
                             isSeasonalRate = isSeasonal
                         )
                     )
                 },
+                enabled = name.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa)
             ) {
                 Text("Save Changes")
@@ -582,10 +715,12 @@ fun AddNewMenuItemDialog(
     var name by remember { mutableStateOf("") }
     var category by remember { mutableStateOf(MenuCategory.CLASSIC_CAKES) }
     var description by remember { mutableStateOf("") }
-    var size1Name by remember { mutableStateOf(category.defaultSizes.first) }
-    var size2Name by remember { mutableStateOf(category.defaultSizes.second) }
+    var size1Name by remember { mutableStateOf("500 g") }
+    var size2Name by remember { mutableStateOf("1 KG") }
+    var size3Name by remember { mutableStateOf("2 KG") }
     var price1Text by remember { mutableStateOf("") }
     var price2Text by remember { mutableStateOf("") }
+    var price3Text by remember { mutableStateOf("") }
     var isEggless by remember { mutableStateOf(true) }
     var isSeasonal by remember { mutableStateOf(false) }
 
@@ -629,8 +764,15 @@ fun AddNewMenuItemDialog(
                                 selected = category == cat,
                                 onClick = {
                                     category = cat
-                                    size1Name = cat.defaultSizes.first
-                                    size2Name = cat.defaultSizes.second
+                                    if (cat == MenuCategory.BROWNIES || cat == MenuCategory.TEA_CAKES || cat == MenuCategory.COOKIES) {
+                                        size1Name = "250 g"
+                                        size2Name = "500 g"
+                                        size3Name = "1 KG"
+                                    } else {
+                                        size1Name = "500 g"
+                                        size2Name = "1 KG"
+                                        size3Name = "2 KG"
+                                    }
                                 },
                                 label = { Text(cat.displayName, fontSize = 11.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
@@ -679,7 +821,26 @@ fun AddNewMenuItemDialog(
 
                 if (!isSeasonal) {
                     HorizontalDivider(color = WarmBorder)
-                    Text("Pricing & Portion Sizes", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa))
+                    Text("Pricing & Portion Sizes (Custom Values)", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa))
+
+                    // Portion Preset Chips
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf("250 g", "500 g", "1 KG", "1.5 KG", "2 KG").forEach { preset ->
+                            SuggestionChip(
+                                onClick = {
+                                    if (size1Name.isBlank()) size1Name = preset
+                                    else if (size2Name.isBlank()) size2Name = preset
+                                    else size3Name = preset
+                                },
+                                label = { Text(preset, fontSize = 11.sp) }
+                            )
+                        }
+                    }
 
                     // Variant 1 Name & Price
                     Row(
@@ -689,7 +850,7 @@ fun AddNewMenuItemDialog(
                         OutlinedTextField(
                             value = size1Name,
                             onValueChange = { size1Name = it },
-                            label = { Text("Size 1 (e.g. ½ KG)") },
+                            label = { Text("Size 1 (e.g. 500 g / ½ KG)") },
                             modifier = Modifier.weight(1f),
                             singleLine = true
                         )
@@ -724,6 +885,28 @@ fun AddNewMenuItemDialog(
                             singleLine = true
                         )
                     }
+
+                    // Variant 3 / Custom Portion Name & Price
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = size3Name,
+                            onValueChange = { size3Name = it },
+                            label = { Text("Size 3 (e.g. 2 KG / Custom)") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = price3Text,
+                            onValueChange = { price3Text = it },
+                            label = { Text("Price 3 (₹)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                    }
                 }
             }
         },
@@ -736,10 +919,12 @@ fun AddNewMenuItemDialog(
                             category = category.name,
                             description = description.trim(),
                             isEggless = isEggless,
-                            size1Name = size1Name.ifBlank { "½ KG" },
+                            size1Name = size1Name.ifBlank { "500 g" },
                             price1 = price1Text.toDoubleOrNull() ?: 0.0,
                             size2Name = size2Name.ifBlank { "1 KG" },
                             price2 = price2Text.toDoubleOrNull() ?: 0.0,
+                            size3Name = size3Name.ifBlank { "2 KG" },
+                            price3 = price3Text.toDoubleOrNull() ?: 0.0,
                             isSeasonalRate = isSeasonal
                         )
                     )

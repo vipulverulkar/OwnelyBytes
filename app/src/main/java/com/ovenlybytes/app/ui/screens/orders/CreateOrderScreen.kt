@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -170,6 +171,7 @@ fun CreateOrderScreen(
     // 3. Cart Items
     var cartItems by remember { mutableStateOf(listOf<OrderItemEntity>()) }
     var showAddItemDialog by remember { mutableStateOf(false) }
+    var editingCartItemIndex by remember { mutableStateOf<Int?>(null) }
 
     // 4. Cake Customization
     var cakeMessage by remember { mutableStateOf("") }
@@ -783,6 +785,12 @@ fun CreateOrderScreen(
                                         }
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             IconButton(
+                                                onClick = { editingCartItemIndex = index },
+                                                modifier = Modifier.size(28.dp)
+                                            ) {
+                                                Icon(Icons.Default.Edit, contentDescription = "Edit Item Details", tint = TextSecondary)
+                                            }
+                                            IconButton(
                                                 onClick = {
                                                     val updated = cartItems.toMutableList()
                                                     if (item.quantity > 1) {
@@ -1211,8 +1219,21 @@ fun CreateOrderScreen(
             }
         )
     }
+    // DIALOG: EDIT CART ITEM
+    if (editingCartItemIndex != null && editingCartItemIndex!! in cartItems.indices) {
+        EditCartItemDialog(
+            item = cartItems[editingCartItemIndex!!],
+            onDismiss = { editingCartItemIndex = null },
+            onSave = { updatedItem ->
+                val updatedList = cartItems.toMutableList()
+                updatedList[editingCartItemIndex!!] = updatedItem
+                cartItems = updatedList
+                editingCartItemIndex = null
+            }
+        )
+    }
 
-    // DIALOG: ADD MENU ITEM (Directly lists items from the Ovenly Bites Menu)
+    // DIALOG: ADD MENU ITEM (Directly lists items from the Ovenly Bites Menu or Custom Item)
     if (showAddItemDialog) {
         AddMenuItemDialog(
             menuItems = allMenuItems,
@@ -1226,16 +1247,119 @@ fun CreateOrderScreen(
 }
 
 @Composable
+fun EditCartItemDialog(
+    item: OrderItemEntity,
+    onDismiss: () -> Unit,
+    onSave: (OrderItemEntity) -> Unit
+) {
+    var itemName by remember { mutableStateOf(item.itemName) }
+    var variantName by remember { mutableStateOf(item.variantName) }
+    var unitPriceText by remember { mutableStateOf(if (item.unitPrice > 0) item.unitPrice.toInt().toString() else "") }
+    var quantity by remember { mutableStateOf(item.quantity) }
+
+    val unitPrice = unitPriceText.toDoubleOrNull() ?: item.unitPrice
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Cart Item Details", fontWeight = FontWeight.Bold, color = PrimaryCocoa) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedTextField(
+                    value = itemName,
+                    onValueChange = { itemName = it },
+                    label = { Text("Item Name *") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = variantName,
+                    onValueChange = { variantName = it },
+                    label = { Text("Portion / Variant Name") },
+                    placeholder = { Text("e.g. 1 KG, Custom Pack") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = unitPriceText,
+                    onValueChange = { unitPriceText = it },
+                    label = { Text("Unit Price (₹) *") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Quantity", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = { if (quantity > 1) quantity-- },
+                            enabled = quantity > 1
+                        ) {
+                            Icon(Icons.Default.RemoveCircleOutline, contentDescription = "Decrease")
+                        }
+                        Text("$quantity", fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp))
+                        IconButton(onClick = { quantity++ }) {
+                            Icon(Icons.Default.AddCircleOutline, contentDescription = "Increase", tint = PrimaryCocoa)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onSave(
+                        item.copy(
+                            itemName = itemName.trim().ifBlank { item.itemName },
+                            variantName = variantName.trim().ifBlank { "Standard" },
+                            unitPrice = unitPrice,
+                            quantity = quantity,
+                            itemTotal = unitPrice * quantity
+                        )
+                    )
+                },
+                enabled = itemName.isNotBlank() && unitPrice > 0,
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa)
+            ) {
+                Text("Save Changes")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = TextSecondary)
+            }
+        }
+    )
+}
+
+@Composable
 fun AddMenuItemDialog(
     menuItems: List<MenuItemEntity>,
     onDismiss: () -> Unit,
     onItemAdded: (OrderItemEntity) -> Unit
 ) {
+    var isCustomTab by remember { mutableStateOf(false) }
+
+    // States for Menu Selection Tab
     var selectedCategory by remember { mutableStateOf<MenuCategory?>(null) }
     var selectedMenuItem by remember { mutableStateOf<MenuItemEntity?>(null) }
     var selectedVariant by remember { mutableStateOf("½ KG") }
+    var customVariantText by remember { mutableStateOf("") }
     var customPriceText by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf(1) }
+
+    // States for Custom Item Tab
+    var customItemName by remember { mutableStateOf("") }
+    var customItemCategory by remember { mutableStateOf(MenuCategory.CUSTOM) }
+    var customItemVariant by remember { mutableStateOf("Custom Portion") }
+    var customItemUnitPriceText by remember { mutableStateOf("") }
+    var customItemQuantity by remember { mutableStateOf(1) }
 
     val categories = MenuCategory.values().toList()
 
@@ -1244,9 +1368,12 @@ fun AddMenuItemDialog(
     }
 
     val unitPrice = remember(selectedMenuItem, selectedVariant, customPriceText) {
-        if (selectedMenuItem?.isSeasonalRate == true && customPriceText.isNotBlank()) {
+        if (selectedMenuItem == null) 0.0
+        else if (selectedMenuItem!!.isSeasonalRate) {
             customPriceText.toDoubleOrNull() ?: 0.0
-        } else if (selectedMenuItem != null) {
+        } else if (selectedVariant == "+ Custom Size / Price") {
+            customPriceText.toDoubleOrNull() ?: 0.0
+        } else {
             val item = selectedMenuItem!!
             val base1KgPrice = if (item.price2 > 0) item.price2 else item.price1 * 2.0
             val baseHalfKgPrice = if (item.price1 > 0) item.price1 else item.price2 / 2.0
@@ -1256,158 +1383,282 @@ fun AddMenuItemDialog(
                 item.size1Name, "½ KG", "250 g" -> baseHalfKgPrice
                 item.size2Name, "1 KG", "500 g" -> base1KgPrice
                 "1.5 KG" -> base1KgPrice * 1.5
-                item.size3Name, "2 KG" -> base2KgPrice
+                item.size3Name, "2 KG" -> if (item.price3 > 0) item.price3 else base2KgPrice
                 "2.5 KG" -> base1KgPrice * 2.5
                 "3 KG" -> base1KgPrice * 3.0
                 else -> item.price1
             }
-        } else 0.0
+        }
     }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("Select from Ovenly Bites Menu", fontWeight = FontWeight.Bold, color = PrimaryCocoa)
+            Column {
+                Text("Add Item to Order", fontWeight = FontWeight.Bold, color = PrimaryCocoa)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    FilterChip(
+                        selected = !isCustomTab,
+                        onClick = { isCustomTab = false },
+                        label = { Text("From Menu Items", fontSize = 11.sp, fontWeight = FontWeight.SemiBold) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    FilterChip(
+                        selected = isCustomTab,
+                        onClick = { isCustomTab = true },
+                        label = { Text("+ Custom Item", fontSize = 11.sp, fontWeight = FontWeight.SemiBold) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
         },
         text = {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 420.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Category Pills
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        FilterChip(
-                            selected = selectedCategory == null,
-                            onClick = { selectedCategory = null },
-                            label = { Text("All", fontSize = 11.sp) }
-                        )
-                        categories.forEach { cat ->
+            if (!isCustomTab) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 380.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Category Pills
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
                             FilterChip(
-                                selected = selectedCategory == cat,
-                                onClick = { selectedCategory = cat },
-                                label = { Text(cat.displayName, fontSize = 11.sp) }
+                                selected = selectedCategory == null,
+                                onClick = { selectedCategory = null },
+                                label = { Text("All", fontSize = 11.sp) }
                             )
+                            categories.forEach { cat ->
+                                FilterChip(
+                                    selected = selectedCategory == cat,
+                                    onClick = { selectedCategory = cat },
+                                    label = { Text(cat.displayName, fontSize = 11.sp) }
+                                )
+                            }
+                        }
+                    }
+
+                    // Items list
+                    items(filteredItems) { item ->
+                        val isSelected = selectedMenuItem?.id == item.id
+                        val iconConfig = remember(item.category, item.name) {
+                            com.ovenlybytes.app.util.MenuItemIconHelper.getIconConfig(item.category, item.name)
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.background,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedMenuItem = item
+                                    selectedVariant = item.size1Name
+                                    customVariantText = ""
+                                    if (item.isSeasonalRate) customPriceText = item.price1.toInt().toString() else customPriceText = ""
+                                }
+                                .border(
+                                    width = if (isSelected) 1.5.dp else 0.5.dp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else WarmBorder,
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                                .background(iconConfig.backgroundColor),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = iconConfig.icon,
+                                                contentDescription = item.name,
+                                                tint = iconConfig.iconTint,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(item.name, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    }
+
+                                    if (item.isSeasonalRate) {
+                                        Text("Per fruit rate", fontSize = 11.sp, color = SecondaryRose, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                                if (isSelected) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        val variantsList = buildList {
+                                            if (item.size1Name.isNotBlank()) add(item.size1Name)
+                                            if (item.size2Name.isNotBlank()) add(item.size2Name)
+                                            if (item.size3Name.isNotBlank()) add(item.size3Name)
+                                            add("250 g")
+                                            add("500 g")
+                                            add("1 KG")
+                                            add("1.5 KG")
+                                            add("2 KG")
+                                            add("+ Custom Size / Price")
+                                        }.distinct()
+
+                                        val base1KgPrice = if (item.price2 > 0) item.price2 else item.price1 * 2.0
+                                        val baseHalfKgPrice = if (item.price1 > 0) item.price1 else item.price2 / 2.0
+
+                                        variantsList.forEach { variantLabel ->
+                                            val vPrice = when (variantLabel) {
+                                                item.size1Name -> item.price1
+                                                item.size2Name -> item.price2
+                                                item.size3Name -> if (item.price3 > 0) item.price3 else base1KgPrice * 2.0
+                                                "250 g" -> baseHalfKgPrice / 2.0
+                                                "500 g", "½ KG" -> baseHalfKgPrice
+                                                "1 KG" -> base1KgPrice
+                                                "1.5 KG" -> base1KgPrice * 1.5
+                                                "2 KG" -> if (item.price3 > 0) item.price3 else base1KgPrice * 2.0
+                                                "+ Custom Size / Price" -> customPriceText.toDoubleOrNull() ?: 0.0
+                                                else -> item.price1
+                                            }
+                                            val chipLabel = if (variantLabel == "+ Custom Size / Price") {
+                                                "+ Custom"
+                                            } else {
+                                                "$variantLabel (₹${vPrice.toInt()})"
+                                            }
+                                            FilterChip(
+                                                selected = selectedVariant == variantLabel,
+                                                onClick = {
+                                                    selectedVariant = variantLabel
+                                                    if (variantLabel == "+ Custom Size / Price" && customPriceText.isBlank()) {
+                                                        customPriceText = item.price1.toInt().toString()
+                                                    }
+                                                },
+                                                label = { Text(chipLabel, fontSize = 11.sp) }
+                                            )
+                                        }
+                                    }
+                                    if (selectedVariant == "+ Custom Size / Price") {
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            OutlinedTextField(
+                                                value = customVariantText,
+                                                onValueChange = { customVariantText = it },
+                                                label = { Text("Custom Size / Portion Name") },
+                                                placeholder = { Text("e.g. 4 KG, Custom Pack, Box of 12") },
+                                                singleLine = true,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                            OutlinedTextField(
+                                                value = customPriceText,
+                                                onValueChange = { customPriceText = it },
+                                                label = { Text("Custom Unit Price (₹)") },
+                                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                                singleLine = true,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+                                    } else if (item.isSeasonalRate) {
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        OutlinedTextField(
+                                            value = customPriceText,
+                                            onValueChange = { customPriceText = it },
+                                            label = { Text("Seasonal Price for this order (₹)") },
+                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                            singleLine = true,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
+            } else {
+                // Custom Item Tab Form
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedTextField(
+                        value = customItemName,
+                        onValueChange = { customItemName = it },
+                        label = { Text("Item Name *") },
+                        placeholder = { Text("e.g. Custom Theme Photo Cake") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                // Items list
-                items(filteredItems) { item ->
-                    val isSelected = selectedMenuItem?.id == item.id
-                    val iconConfig = remember(item.category, item.name) {
-                        com.ovenlybytes.app.util.MenuItemIconHelper.getIconConfig(item.category, item.name)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Category", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = TextSecondary))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            categories.forEach { cat ->
+                                FilterChip(
+                                    selected = customItemCategory == cat,
+                                    onClick = { customItemCategory = cat },
+                                    label = { Text(cat.displayName, fontSize = 11.sp) }
+                                )
+                            }
+                        }
                     }
 
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.background,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                selectedMenuItem = item
-                                selectedVariant = item.size1Name
-                                if (item.isSeasonalRate) customPriceText = item.price1.toInt().toString()
-                            }
-                            .border(
-                                width = if (isSelected) 1.5.dp else 0.5.dp,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else WarmBorder,
-                                shape = RoundedCornerShape(10.dp)
-                            )
+                    OutlinedTextField(
+                        value = customItemVariant,
+                        onValueChange = { customItemVariant = it },
+                        label = { Text("Portion / Variant Name") },
+                        placeholder = { Text("e.g. 2 KG / Custom Box") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = customItemUnitPriceText,
+                        onValueChange = { customItemUnitPriceText = it },
+                        label = { Text("Unit Price (₹) *") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.padding(10.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                        Text("Quantity", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = { if (customItemQuantity > 1) customItemQuantity-- },
+                                enabled = customItemQuantity > 1
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .clip(CircleShape)
-                                            .background(iconConfig.backgroundColor),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = iconConfig.icon,
-                                            contentDescription = item.name,
-                                            tint = iconConfig.iconTint,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(item.name, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                }
-
-                                if (item.isSeasonalRate) {
-                                    Text("Per fruit rate", fontSize = 11.sp, color = SecondaryRose, fontWeight = FontWeight.Bold)
-                                } else {
-                                    Text(
-                                        "${item.size1Name}: ₹${item.price1.toInt()} | ${item.size2Name}: ₹${item.price2.toInt()}",
-                                        fontSize = 11.sp,
-                                        color = TextSecondary,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
+                                Icon(Icons.Default.RemoveCircleOutline, contentDescription = "Decrease")
                             }
-                            if (isSelected) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .horizontalScroll(rememberScrollState()),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    val variantsList = listOf(
-                                        item.size1Name,
-                                        item.size2Name,
-                                        "1.5 KG",
-                                        item.size3Name,
-                                        "2.5 KG",
-                                        "3 KG"
-                                    ).distinct()
-
-                                    val base1KgPrice = if (item.price2 > 0) item.price2 else item.price1 * 2.0
-
-                                    variantsList.forEach { variantLabel ->
-                                        val vPrice = when (variantLabel) {
-                                            item.size1Name -> item.price1
-                                            item.size2Name -> item.price2
-                                            "1.5 KG" -> base1KgPrice * 1.5
-                                            item.size3Name -> if (item.price3 > 0) item.price3 else base1KgPrice * 2.0
-                                            "2.5 KG" -> base1KgPrice * 2.5
-                                            "3 KG" -> base1KgPrice * 3.0
-                                            else -> item.price1
-                                        }
-                                        FilterChip(
-                                            selected = selectedVariant == variantLabel,
-                                            onClick = { selectedVariant = variantLabel },
-                                            label = { Text("$variantLabel (₹${vPrice.toInt()})", fontSize = 11.sp) }
-                                        )
-                                    }
-                                }
-                                if (item.isSeasonalRate) {
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    OutlinedTextField(
-                                        value = customPriceText,
-                                        onValueChange = { customPriceText = it },
-                                        label = { Text("Seasonal Price for this order (₹)") },
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                        singleLine = true,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
+                            Text("$customItemQuantity", fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp))
+                            IconButton(onClick = { customItemQuantity++ }) {
+                                Icon(Icons.Default.AddCircleOutline, contentDescription = "Increase", tint = PrimaryCocoa)
                             }
                         }
                     }
@@ -1415,27 +1666,56 @@ fun AddMenuItemDialog(
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    if (selectedMenuItem != null) {
+            if (!isCustomTab) {
+                Button(
+                    onClick = {
+                        if (selectedMenuItem != null) {
+                            val finalVariantName = if (selectedVariant == "+ Custom Size / Price") {
+                                customVariantText.ifBlank { "Custom Portion" }
+                            } else {
+                                selectedVariant
+                            }
+                            onItemAdded(
+                                OrderItemEntity(
+                                    orderId = 0,
+                                    menuItemId = selectedMenuItem!!.id,
+                                    itemName = selectedMenuItem!!.name,
+                                    category = selectedMenuItem!!.category,
+                                    variantName = finalVariantName,
+                                    unitPrice = unitPrice,
+                                    quantity = quantity,
+                                    itemTotal = unitPrice * quantity
+                                )
+                            )
+                        }
+                    },
+                    enabled = selectedMenuItem != null && unitPrice > 0.0,
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa)
+                ) {
+                    Text("Add to Order (₹${(unitPrice * quantity).toInt()})")
+                }
+            } else {
+                val price = customItemUnitPriceText.toDoubleOrNull() ?: 0.0
+                Button(
+                    onClick = {
                         onItemAdded(
                             OrderItemEntity(
                                 orderId = 0,
-                                menuItemId = selectedMenuItem!!.id,
-                                itemName = selectedMenuItem!!.name,
-                                category = selectedMenuItem!!.category,
-                                variantName = selectedVariant,
-                                unitPrice = unitPrice,
-                                quantity = quantity,
-                                itemTotal = unitPrice * quantity
+                                menuItemId = null,
+                                itemName = customItemName.trim(),
+                                category = customItemCategory.name,
+                                variantName = customItemVariant.trim().ifBlank { "Custom" },
+                                unitPrice = price,
+                                quantity = customItemQuantity,
+                                itemTotal = price * customItemQuantity
                             )
                         )
-                    }
-                },
-                enabled = selectedMenuItem != null && unitPrice > 0.0,
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa)
-            ) {
-                Text("Add to Order (₹${(unitPrice * quantity).toInt()})")
+                    },
+                    enabled = customItemName.isNotBlank() && price > 0.0,
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa)
+                ) {
+                    Text("Add Custom Item (₹${(price * customItemQuantity).toInt()})")
+                }
             }
         },
         dismissButton = {

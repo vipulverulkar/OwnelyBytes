@@ -559,6 +559,8 @@ object BackupManager {
                     put("price1", m.price1)
                     put("size2Name", m.size2Name)
                     put("price2", m.price2)
+                    put("size3Name", m.size3Name)
+                    put("price3", m.price3)
                     put("isSeasonalRate", m.isSeasonalRate)
                     put("isAvailable", m.isAvailable)
                 })
@@ -705,6 +707,8 @@ object BackupManager {
                             price1 = obj.getDouble("price1"),
                             size2Name = obj.optString("size2Name", "1 KG"),
                             price2 = obj.optDouble("price2", 0.0),
+                            size3Name = obj.optString("size3Name", "2 KG"),
+                            price3 = obj.optDouble("price3", 0.0),
                             isSeasonalRate = obj.optBoolean("isSeasonalRate", false),
                             isAvailable = obj.optBoolean("isAvailable", true)
                         )

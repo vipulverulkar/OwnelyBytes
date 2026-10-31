@@ -618,6 +618,7 @@ fun EditOrderDialog(
 
     var cartItems by remember { mutableStateOf(orderWithDetails.items) }
     var showAddItemDialog by remember { mutableStateOf(false) }
+    var editingCartItemIndex by remember { mutableStateOf<Int?>(null) }
 
     val customizationCharge = customizationChargeText.toDoubleOrNull() ?: 0.0
     val discount = discountText.toDoubleOrNull() ?: 0.0
@@ -737,6 +738,12 @@ fun EditOrderDialog(
                                 Text("${item.variantName} • ₹${item.unitPrice.toInt()} x ${item.quantity} = ₹${item.itemTotal.toInt()}", fontSize = 11.sp, color = TextSecondary)
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(
+                                    onClick = { editingCartItemIndex = index },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit Item Details", tint = TextSecondary)
+                                }
                                 IconButton(
                                     onClick = {
                                         val updated = cartItems.toMutableList()
@@ -887,6 +894,19 @@ fun EditOrderDialog(
             }
         }
     )
+
+    if (editingCartItemIndex != null && editingCartItemIndex!! in cartItems.indices) {
+        com.ovenlybytes.app.ui.screens.orders.EditCartItemDialog(
+            item = cartItems[editingCartItemIndex!!],
+            onDismiss = { editingCartItemIndex = null },
+            onSave = { updatedItem ->
+                val updatedList = cartItems.toMutableList()
+                updatedList[editingCartItemIndex!!] = updatedItem
+                cartItems = updatedList
+                editingCartItemIndex = null
+            }
+        )
+    }
 
     if (showAddItemDialog) {
         AddMenuItemDialog(
