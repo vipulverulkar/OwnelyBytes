@@ -61,35 +61,13 @@ fun OvenlyAppContent(app: OvenlyBytesApp) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // ViewModel instances backed by Room repository
+    // Theme ViewModel
     val settingsViewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModel.Factory(app.repository, app.shopPreferences)
     )
     val appTheme by settingsViewModel.appTheme.collectAsState()
 
     OvenlyBytesTheme(appTheme = appTheme) {
-        val dashboardViewModel: DashboardViewModel = viewModel(
-            factory = DashboardViewModel.Factory(app.repository)
-        )
-        val ordersViewModel: OrdersViewModel = viewModel(
-            factory = OrdersViewModel.Factory(app.repository)
-        )
-        val customerViewModel: CustomerViewModel = viewModel(
-            factory = CustomerViewModel.Factory(app.repository)
-        )
-        val inventoryViewModel: InventoryViewModel = viewModel(
-            factory = InventoryViewModel.Factory(app.repository)
-        )
-        val menuViewModel: MenuViewModel = viewModel(
-            factory = MenuViewModel.Factory(app.repository)
-        )
-        val reportsViewModel: com.ovenlybytes.app.ui.screens.reports.ReportsViewModel = viewModel(
-            factory = com.ovenlybytes.app.ui.screens.reports.ReportsViewModel.Factory(app.repository)
-        )
-        val settingsViewModel: SettingsViewModel = viewModel(
-            factory = SettingsViewModel.Factory(app.repository, app.shopPreferences)
-        )
-
         // Show bottom bar only on primary destination screens
         val shouldShowBottomBar = currentRoute in listOf(
             Screen.Dashboard.route,
@@ -99,161 +77,185 @@ fun OvenlyAppContent(app: OvenlyBytesApp) {
             Screen.Settings.route
         )
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            if (shouldShowBottomBar) {
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 6.dp
-                ) {
-                    bottomNavItems.forEach { item ->
-                        val selected = currentRoute == item.route
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                if (currentRoute != item.route) {
-                                    navController.navigate(item.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            bottomBar = {
+                if (shouldShowBottomBar) {
+                    NavigationBar(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        tonalElevation = 6.dp
+                    ) {
+                        bottomNavItems.forEach { item ->
+                            val selected = currentRoute == item.route
+                            NavigationBarItem(
+                                selected = selected,
+                                onClick = {
+                                    if (currentRoute != item.route) {
+                                        navController.navigate(item.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
                                         }
-                                        launchSingleTop = true
-                                        restoreState = true
                                     }
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
-                                    contentDescription = item.title
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                                        contentDescription = item.title
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = item.title,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                                    indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                            },
-                            label = {
-                                Text(
-                                    text = item.title,
-                                    fontSize = 11.sp,
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                                )
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.primary,
-                                selectedTextColor = MaterialTheme.colorScheme.primary,
-                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        )
+                        }
                     }
                 }
             }
-        }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = Screen.Dashboard.route,
-            modifier = Modifier.padding(innerPadding),
-            enterTransition = { EnterTransition.None },
-            exitTransition = { ExitTransition.None }
-        ) {
-            // Dashboard
-            composable(Screen.Dashboard.route) {
-                DashboardScreen(
-                    viewModel = dashboardViewModel,
-                    onNavigateToCreateOrder = { navController.navigate(Screen.CreateOrder.route) },
-                    onNavigateToOrderDetail = { orderId ->
-                        navController.navigate(Screen.OrderDetail.createRoute(orderId))
-                    },
-                    onNavigateToOrders = { navController.navigate(Screen.Orders.route) },
-                    onNavigateToInventory = { navController.navigate(Screen.Inventory.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
-                )
-            }
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = Screen.Dashboard.route,
+                modifier = Modifier.padding(innerPadding),
+                enterTransition = { EnterTransition.None },
+                exitTransition = { ExitTransition.None }
+            ) {
+                // Dashboard
+                composable(Screen.Dashboard.route) {
+                    val dashboardViewModel: DashboardViewModel = viewModel(
+                        factory = DashboardViewModel.Factory(app.repository)
+                    )
+                    DashboardScreen(
+                        viewModel = dashboardViewModel,
+                        onNavigateToCreateOrder = { navController.navigate(Screen.CreateOrder.route) },
+                        onNavigateToOrderDetail = { orderId ->
+                            navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                        },
+                        onNavigateToOrders = { navController.navigate(Screen.Orders.route) },
+                        onNavigateToInventory = { navController.navigate(Screen.Inventory.route) },
+                        onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                    )
+                }
 
-            // Orders List
-            composable(Screen.Orders.route) {
-                OrdersListScreen(
-                    viewModel = ordersViewModel,
-                    onNavigateToCreateOrder = { navController.navigate(Screen.CreateOrder.route) },
-                    onNavigateToOrderDetail = { orderId ->
-                        navController.navigate(Screen.OrderDetail.createRoute(orderId))
-                    }
-                )
-            }
+                // Orders List
+                composable(Screen.Orders.route) {
+                    val ordersViewModel: OrdersViewModel = viewModel(
+                        factory = OrdersViewModel.Factory(app.repository)
+                    )
+                    OrdersListScreen(
+                        viewModel = ordersViewModel,
+                        onNavigateToCreateOrder = { navController.navigate(Screen.CreateOrder.route) },
+                        onNavigateToOrderDetail = { orderId ->
+                            navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                        }
+                    )
+                }
 
-            // Create Order
-            composable(Screen.CreateOrder.route) {
-                CreateOrderScreen(
-                    viewModel = ordersViewModel,
-                    onNavigateBack = { navController.popBackStack() },
-                    onOrderCreated = { newOrderId ->
-                        navController.popBackStack()
-                        navController.navigate(Screen.OrderDetail.createRoute(newOrderId))
-                    }
-                )
-            }
+                // Create Order
+                composable(Screen.CreateOrder.route) {
+                    val ordersViewModel: OrdersViewModel = viewModel(
+                        factory = OrdersViewModel.Factory(app.repository)
+                    )
+                    CreateOrderScreen(
+                        viewModel = ordersViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onOrderCreated = { newOrderId ->
+                            navController.popBackStack()
+                            navController.navigate(Screen.OrderDetail.createRoute(newOrderId))
+                        }
+                    )
+                }
 
-            // Order Detail
-            composable(
-                route = Screen.OrderDetail.route,
-                arguments = listOf(navArgument("orderId") { type = NavType.LongType })
-            ) { backStackEntry ->
-                val orderId = backStackEntry.arguments?.getLong("orderId") ?: 0L
-                OrderDetailScreen(
-                    orderId = orderId,
-                    viewModel = ordersViewModel,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
+                // Order Detail
+                composable(
+                    route = Screen.OrderDetail.route,
+                    arguments = listOf(navArgument("orderId") { type = NavType.LongType })
+                ) { backStackEntry ->
+                    val orderId = backStackEntry.arguments?.getLong("orderId") ?: 0L
+                    val ordersViewModel: OrdersViewModel = viewModel(
+                        factory = OrdersViewModel.Factory(app.repository)
+                    )
+                    OrderDetailScreen(
+                        orderId = orderId,
+                        viewModel = ordersViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
 
-            // Menu Catalog
-            composable(Screen.Menu.route) {
-                MenuCatalogScreen(
-                    viewModel = menuViewModel,
-                    onNavigateBack = { navController.popBackStack() },
-                    onTakeOrderWithItem = {
-                        navController.navigate(Screen.CreateOrder.route)
-                    }
-                )
-            }
+                // Menu Catalog
+                composable(Screen.Menu.route) {
+                    val menuViewModel: MenuViewModel = viewModel(
+                        factory = MenuViewModel.Factory(app.repository)
+                    )
+                    MenuCatalogScreen(
+                        viewModel = menuViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onTakeOrderWithItem = {
+                            navController.navigate(Screen.CreateOrder.route)
+                        }
+                    )
+                }
 
-            // Inventory
-            composable(Screen.Inventory.route) {
-                InventoryScreen(
-                    viewModel = inventoryViewModel,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
+                // Inventory
+                composable(Screen.Inventory.route) {
+                    val inventoryViewModel: InventoryViewModel = viewModel(
+                        factory = InventoryViewModel.Factory(app.repository)
+                    )
+                    InventoryScreen(
+                        viewModel = inventoryViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
 
-            // Customers
-            composable(Screen.Customers.route) {
-                CustomerListScreen(
-                    viewModel = customerViewModel,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
+                // Customers
+                composable(Screen.Customers.route) {
+                    val customerViewModel: CustomerViewModel = viewModel(
+                        factory = CustomerViewModel.Factory(app.repository)
+                    )
+                    CustomerListScreen(
+                        viewModel = customerViewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
 
-            // Settings & Hub
-            composable(Screen.Settings.route) {
-                SettingsScreen(
-                    viewModel = settingsViewModel,
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToCustomers = { navController.navigate(Screen.Customers.route) },
-                    onNavigateToInventory = { navController.navigate(Screen.Inventory.route) }
-                )
-            }
+                // Settings & Hub
+                composable(Screen.Settings.route) {
+                    SettingsScreen(
+                        viewModel = settingsViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToCustomers = { navController.navigate(Screen.Customers.route) },
+                        onNavigateToInventory = { navController.navigate(Screen.Inventory.route) }
+                    )
+                }
 
-            // Reports & Financial Analytics
-            composable(Screen.Reports.route) {
-                com.ovenlybytes.app.ui.screens.reports.ReportsScreen(
-                    viewModel = reportsViewModel,
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToOrderDetail = { orderId ->
-                        navController.navigate(Screen.OrderDetail.createRoute(orderId))
-                    }
-                )
+                // Reports & Financial Analytics
+                composable(Screen.Reports.route) {
+                    val reportsViewModel: com.ovenlybytes.app.ui.screens.reports.ReportsViewModel = viewModel(
+                        factory = com.ovenlybytes.app.ui.screens.reports.ReportsViewModel.Factory(app.repository)
+                    )
+                    com.ovenlybytes.app.ui.screens.reports.ReportsScreen(
+                        viewModel = reportsViewModel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToOrderDetail = { orderId ->
+                            navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                        }
+                    )
+                }
             }
         }
     }
-}
 }
 

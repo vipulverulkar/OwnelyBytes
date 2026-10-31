@@ -10,6 +10,13 @@ class OvenlyBytesApp : Application() {
 
     private val applicationScope = CoroutineScope(SupervisorJob())
 
+    override fun onCreate() {
+        super.onCreate()
+        try {
+            System.loadLibrary("sqlcipher")
+        } catch (_: Throwable) {}
+    }
+
     val database by lazy {
         OvenlyDatabase.getDatabase(this, applicationScope)
     }

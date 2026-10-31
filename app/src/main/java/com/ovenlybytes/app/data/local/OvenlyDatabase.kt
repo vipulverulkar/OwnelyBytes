@@ -54,9 +54,36 @@ abstract class OvenlyDatabase : RoomDatabase() {
             }
         }
 
+        private fun verifyAndClearUnencryptedLegacyDatabase(context: Context) {
+            try {
+                val dbFile = context.getDatabasePath(com.ovenlybytes.app.util.AppConstants.DATABASE_NAME)
+                if (dbFile.exists()) {
+                    try {
+                        val passphrase = com.ovenlybytes.app.util.SecurityManager.getDatabasePassphrase(context)
+                        val db = net.zetetic.database.sqlcipher.SQLiteDatabase.openDatabase(
+                            dbFile.absolutePath,
+                            String(passphrase, Charsets.UTF_8),
+                            null,
+                            net.zetetic.database.sqlcipher.SQLiteDatabase.OPEN_READWRITE,
+                            null
+                        )
+                        db.close()
+                    } catch (_: Exception) {
+                        context.deleteDatabase(com.ovenlybytes.app.util.AppConstants.DATABASE_NAME)
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+
         fun getDatabase(context: Context, scope: CoroutineScope): OvenlyDatabase {
             return INSTANCE ?: synchronized(this) {
-                val factory = com.ovenlybytes.app.util.SecurityManager.getSQLCipherFactory(context)
+                verifyAndClearUnencryptedLegacyDatabase(context)
+                val factory = try {
+                    com.ovenlybytes.app.util.SecurityManager.getSQLCipherFactory(context)
+                } catch (_: Exception) {
+                    null
+                }
+
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     OvenlyDatabase::class.java,
@@ -67,6 +94,7 @@ abstract class OvenlyDatabase : RoomDatabase() {
                     .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .fallbackToDestructiveMigrationOnDowngrade(true)
                     .build()
+
                 INSTANCE = instance
                 instance
             }
@@ -81,19 +109,6 @@ abstract class OvenlyDatabase : RoomDatabase() {
             INSTANCE?.let { database ->
                 scope.launch(Dispatchers.IO) {
                     populateInitialData(database)
-                }
-            }
-        }
-
-        override fun onOpen(db: SupportSQLiteDatabase) {
-            super.onOpen(db)
-            INSTANCE?.let { database ->
-                scope.launch(Dispatchers.IO) {
-                    val menuItemDao = database.menuItemDao()
-                    val inventoryDao = database.inventoryDao()
-                    if (menuItemDao.getMenuItemCount() == 0 || inventoryDao.getInventoryCount() == 0) {
-                        populateInitialData(database)
-                    }
                 }
             }
         }
