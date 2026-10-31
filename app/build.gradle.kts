@@ -46,6 +46,9 @@ android {
     }
 
     packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
@@ -80,6 +83,10 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+
+    // Security & Encryption
+    implementation(libs.androidx.security.crypto)
+    implementation(libs.sqlcipher.android)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)

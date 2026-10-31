@@ -218,6 +218,64 @@ fun ReportsScreen(
                     }
                 }
 
+                // SECTION 1.5: SECONDARY KPI METRICS (Average Order Value & Collection Rate %)
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        // Average Order Value Card
+                        Card(
+                            shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("Avg Order Value", style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary))
+                                    Icon(Icons.Default.Analytics, contentDescription = null, tint = PrimaryCocoa, modifier = Modifier.size(16.dp))
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = Formatters.formatCurrency(stats.avgOrderValue),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa)
+                                )
+                                Text("per order avg", fontSize = 10.sp, color = TextMuted)
+                            }
+                        }
+
+                        // Collection Rate Card
+                        Card(
+                            shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("Collection Rate", style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary))
+                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = StatusReady, modifier = Modifier.size(16.dp))
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "${String.format(java.util.Locale.US, "%.1f", stats.collectionRatePercentage)}%",
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = StatusReady)
+                                )
+                                Text("collected balance", fontSize = 10.sp, color = TextMuted)
+                            }
+                        }
+                    }
+                }
+
                 // SECTION 2: QUICK PERIOD COMPARISON SUMMARY
                 item {
                     Card(
@@ -386,6 +444,62 @@ fun ReportsScreen(
                                                 )
                                             }
                                         }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // SECTION 3.5: TOP CATEGORIES SALES BREAKDOWN
+                if (stats.categorySales.isNotEmpty()) {
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Sales by Bakery Category",
+                                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                    )
+                                    Text(
+                                        text = "${stats.categorySales.size} categories",
+                                        fontSize = 11.sp,
+                                        color = TextSecondary
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                val maxCatRevenue = stats.categorySales.maxOfOrNull { it.revenue } ?: 1.0
+                                stats.categorySales.forEach { catStat ->
+                                    val progress = if (maxCatRevenue > 0) (catStat.revenue / maxCatRevenue).toFloat() else 0f
+                                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text("${catStat.categoryName} (${catStat.itemsCount} items)", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                                            Text("${Formatters.formatCurrency(catStat.revenue)} (${String.format(java.util.Locale.US, "%.0f", catStat.percentage)}%)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                        }
+                                        Spacer(modifier = Modifier.height(3.dp))
+                                        LinearProgressIndicator(
+                                            progress = { progress },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(6.dp)
+                                                .clip(RoundedCornerShape(3.dp)),
+                                            color = PrimaryCocoa,
+                                            trackColor = WarmBorder
+                                        )
                                     }
                                 }
                             }

@@ -19,10 +19,19 @@ data class YearlyRevenue(
     val revenue: Double
 )
 
+data class CategorySalesStat(
+    val categoryName: String,
+    val itemsCount: Int,
+    val revenue: Double,
+    val percentage: Double
+)
+
 data class FinancialReportStats(
     val totalOrdersCount: Int = 0,
     val totalRevenue: Double = 0.0,
     val totalPendingBalance: Double = 0.0,
+    val avgOrderValue: Double = 0.0,
+    val collectionRatePercentage: Double = 100.0,
     val todayRevenue: Double = 0.0,
     val todayOrdersCount: Int = 0,
     val thisMonthRevenue: Double = 0.0,
@@ -32,5 +41,6 @@ data class FinancialReportStats(
     val dailyRevenues: List<DailyRevenue> = emptyList(),
     val monthlyRevenues: List<MonthlyRevenue> = emptyList(),
     val yearlyRevenues: List<YearlyRevenue> = emptyList(),
+    val categorySales: List<CategorySalesStat> = emptyList(),
     val pendingPaymentOrders: List<OrderWithCustomerAndItems> = emptyList()
 )

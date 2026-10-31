@@ -56,11 +56,13 @@ abstract class OvenlyDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context, scope: CoroutineScope): OvenlyDatabase {
             return INSTANCE ?: synchronized(this) {
+                val factory = com.ovenlybytes.app.util.SecurityManager.getSQLCipherFactory(context)
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     OvenlyDatabase::class.java,
                     com.ovenlybytes.app.util.AppConstants.DATABASE_NAME
                 )
+                    .openHelperFactory(factory)
                     .addCallback(OvenlyDatabaseCallback(scope))
                     .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .fallbackToDestructiveMigrationOnDowngrade(true)

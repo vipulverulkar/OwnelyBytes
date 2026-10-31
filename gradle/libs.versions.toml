@@ -33,6 +33,10 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 # Coroutines
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 
+# Security & Encryption
+androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version = "1.1.0" }
+sqlcipher-android = { group = "net.zetetic", name = "sqlcipher-android", version = "4.6.1" }
+
 # Testing
 junit = { group = "junit", name = "junit", version = "4.13.2" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }

@@ -137,9 +137,31 @@ class ReportsViewModel(
             yearlyMap[yearKey] = Pair(currentYear.first + 1, currentYear.second + order.totalAmount)
         }
 
+        val categoryMap = mutableMapOf<String, Pair<Int, Double>>()
+
         filteredOrders.forEach { item ->
             totalRev += item.order.totalAmount
+            item.items.forEach { oi ->
+                val cat = if (oi.category.isNotBlank()) oi.category else "CUSTOM"
+                val curr = categoryMap.getOrDefault(cat, Pair(0, 0.0))
+                categoryMap[cat] = Pair(curr.first + oi.quantity, curr.second + oi.itemTotal)
+            }
         }
+
+        val totalBilled = totalRev + totalPending
+        val collectionRate = if (totalBilled > 0) ((totalRev / totalBilled) * 100.0) else 100.0
+        val avgOrderVal = if (filteredOrders.isNotEmpty()) totalRev / filteredOrders.size else 0.0
+
+        val categoryList = categoryMap.map { (catKey, pair) ->
+            val catDisplayName = runCatching { MenuCategory.valueOf(catKey).displayName }.getOrDefault(catKey)
+            val pct = if (totalRev > 0) ((pair.second / totalRev) * 100.0) else 0.0
+            CategorySalesStat(
+                categoryName = catDisplayName,
+                itemsCount = pair.first,
+                revenue = pair.second,
+                percentage = pct
+            )
+        }.sortedByDescending { it.revenue }
 
         val dailyList = dailyMap.entries.map { (date, pair) ->
             DailyRevenue(dateLabel = date, timestamp = 0L, ordersCount = pair.first, revenue = pair.second)
@@ -157,6 +179,8 @@ class ReportsViewModel(
             totalOrdersCount = filteredOrders.size,
             totalRevenue = totalRev,
             totalPendingBalance = totalPending,
+            avgOrderValue = avgOrderVal,
+            collectionRatePercentage = collectionRate,
             todayRevenue = todayRev,
             todayOrdersCount = todayCount,
             thisMonthRevenue = monthRev,
@@ -166,6 +190,7 @@ class ReportsViewModel(
             dailyRevenues = dailyList,
             monthlyRevenues = monthlyList,
             yearlyRevenues = yearlyList,
+            categorySales = categoryList,
             pendingPaymentOrders = pendingOrders.sortedByDescending { it.order.balanceDue }
         )
     }
