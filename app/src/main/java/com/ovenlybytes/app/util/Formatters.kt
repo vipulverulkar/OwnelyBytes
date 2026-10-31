@@ -55,7 +55,13 @@ object Formatters {
         return diffMs / (24 * 60 * 60 * 1000L)
     }
 
-    fun getDeliveryBadgeText(targetTimestamp: Long): String {
+    fun getDeliveryBadgeText(targetTimestamp: Long, statusName: String = ""): String {
+        if (statusName == "DELIVERED") {
+            return "Delivered"
+        }
+        if (statusName == "CANCELLED") {
+            return "Cancelled"
+        }
         val diffDays = getDaysDifference(targetTimestamp)
         return when {
             diffDays < 0 -> "Overdue by ${-diffDays}d"

@@ -179,8 +179,29 @@ fun CreateOrderScreen(
     var customizationNotes by remember { mutableStateOf("") }
     var customizationChargeText by remember { mutableStateOf("") }
 
-    // 5. Delivery Details
-    val calendar = remember { Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 2) } } // Default 2 days ahead
+    // 5. Delivery Details & Notice Policy
+    var allowSameDayDelivery by remember { mutableStateOf(false) }
+
+    val startOfToday = remember {
+        Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    val startOfTomorrow = remember {
+        Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_YEAR, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    val calendar = remember { Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) } } // Default 1 day ahead (Tomorrow)
     var deliveryTimestamp by remember { mutableStateOf(calendar.timeInMillis) }
     var deliveryTimeSlot by remember { mutableStateOf("5:00 PM - 7:00 PM") }
 
@@ -202,22 +223,25 @@ fun CreateOrderScreen(
         else -> PaymentStatus.PENDING
     }
 
-    // 2-day notice validation check
     val daysUntilDelivery = Formatters.getDaysDifference(deliveryTimestamp)
-    val isShortNotice = daysUntilDelivery < 2
+    val isSameDayOrder = daysUntilDelivery == 0L
 
-    // Date Picker Dialog
-    val datePickerDialog = DatePickerDialog(
-        context,
-        { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
-            val cal = Calendar.getInstance()
-            cal.set(year, month, dayOfMonth, 12, 0, 0)
-            deliveryTimestamp = cal.timeInMillis
-        },
-        calendar.get(Calendar.YEAR),
-        calendar.get(Calendar.MONTH),
-        calendar.get(Calendar.DAY_OF_MONTH)
-    )
+    // Date Picker Dialog (Min Date = Today if same-day allowed, else Tomorrow)
+    val datePickerDialog = remember(allowSameDayDelivery) {
+        DatePickerDialog(
+            context,
+            { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
+                val cal = Calendar.getInstance()
+                cal.set(year, month, dayOfMonth, 12, 0, 0)
+                deliveryTimestamp = cal.timeInMillis
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).apply {
+            datePicker.minDate = if (allowSameDayDelivery) startOfToday else startOfTomorrow
+        }
+    }
 
     fun submitOrder(openWhatsAppReceipt: Boolean) {
         if (cartItems.isEmpty()) return
@@ -924,30 +948,64 @@ fun CreateOrderScreen(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // Notice reminder
-                        if (isShortNotice) {
-                            Surface(
-                                shape = RoundedCornerShape(10.dp),
-                                color = Color(0xFFFFF3E0),
+                        // Same-Day Delivery Option Switch
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (allowSameDayDelivery) Color(0xFFFFF3E0) else Color(0xFFFAFAFA),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(
+                                    width = 1.dp,
+                                    color = if (allowSameDayDelivery) StatusReceived else WarmBorder,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                        ) {
+                            Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(bottom = 10.dp)
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(Icons.Default.Info, contentDescription = null, tint = StatusReceived, modifier = Modifier.size(20.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = "Notice: Ovenly Bites policy is 'Order 2 days before'. Delivery is set for less than 2 days.",
-                                        fontSize = 11.sp,
-                                        color = StatusReceived,
-                                        fontWeight = FontWeight.Medium
+                                        text = "⚡ Allow Same-Day Express Delivery",
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (allowSameDayDelivery) StatusReceived else TextPrimary
+                                        )
+                                    )
+                                    Text(
+                                        text = if (allowSameDayDelivery) "Express option active (today's delivery enabled)" else "Standard policy: At least 1-day advance notice required",
+                                        style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary, fontSize = 11.sp)
                                     )
                                 }
+                                Switch(
+                                    checked = allowSameDayDelivery,
+                                    onCheckedChange = { checked ->
+                                        allowSameDayDelivery = checked
+                                        if (checked) {
+                                            val todayCal = Calendar.getInstance()
+                                            todayCal.set(Calendar.HOUR_OF_DAY, 12)
+                                            todayCal.set(Calendar.MINUTE, 0)
+                                            deliveryTimestamp = todayCal.timeInMillis
+                                        } else {
+                                            val tomorrowCal = Calendar.getInstance()
+                                            tomorrowCal.add(Calendar.DAY_OF_YEAR, 1)
+                                            tomorrowCal.set(Calendar.HOUR_OF_DAY, 12)
+                                            tomorrowCal.set(Calendar.MINUTE, 0)
+                                            deliveryTimestamp = tomorrowCal.timeInMillis
+                                        }
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = StatusReceived
+                                    )
+                                )
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(10.dp))
 
                         // Date Button
                         Surface(
@@ -977,13 +1035,13 @@ fun CreateOrderScreen(
                                 }
                                 Surface(
                                     shape = RoundedCornerShape(8.dp),
-                                    color = if (isShortNotice) Color(0xFFFFEBEE) else EgglessGreenLight
+                                    color = if (isSameDayOrder) Color(0xFFFFF3E0) else EgglessGreenLight
                                 ) {
                                     Text(
                                         text = Formatters.getDeliveryBadgeText(deliveryTimestamp),
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isShortNotice) BalanceDueColor else EgglessGreen,
+                                        color = if (isSameDayOrder) StatusReceived else EgglessGreen,
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                     )
                                 }

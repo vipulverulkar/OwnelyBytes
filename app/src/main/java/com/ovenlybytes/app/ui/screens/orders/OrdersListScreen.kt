@@ -430,10 +430,30 @@ fun OrderRowCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Booking Date: ",
+                            style = MaterialTheme.typography.labelSmall.copy(color = TextSecondary)
+                        )
+                        Text(
+                            text = Formatters.formatDate(order.orderDate),
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Delivery Date: ",
+                            style = MaterialTheme.typography.labelSmall.copy(color = TextSecondary, fontWeight = FontWeight.SemiBold)
+                        )
+                        Text(
+                            text = "${Formatters.formatDate(order.deliveryDate)} (${order.deliveryTimeSlot})",
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        )
+                    }
                     Text(
-                        text = "${Formatters.formatDate(order.deliveryDate)} • ${order.deliveryTimeSlot}",
-                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium)
+                        text = Formatters.getDeliveryBadgeText(order.deliveryDate, order.orderStatus),
+                        style = MaterialTheme.typography.labelSmall.copy(color = SecondaryRose, fontWeight = FontWeight.Bold)
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(

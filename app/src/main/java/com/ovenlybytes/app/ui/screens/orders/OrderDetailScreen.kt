@@ -455,10 +455,22 @@ fun OrderDetailScreen(
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Delivery Date:", color = TextSecondary)
-                            Text("${Formatters.formatDate(order.deliveryDate)} (${order.deliveryTimeSlot})", fontWeight = FontWeight.SemiBold)
+                            Text("Booking Date:", style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary))
+                            Text(Formatters.formatDate(order.orderDate), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold, color = TextPrimary))
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Delivery Date:", style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary, fontWeight = FontWeight.SemiBold))
+                            Text("${Formatters.formatDate(order.deliveryDate)} (${order.deliveryTimeSlot})", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary))
                         }
 
                         Row(
@@ -628,17 +640,21 @@ fun EditOrderDialog(
     val balanceDue = (totalAmount - advancePaid).coerceAtLeast(0.0)
 
     val calendar = remember { Calendar.getInstance().apply { timeInMillis = deliveryTimestamp } }
-    val datePickerDialog = DatePickerDialog(
-        context,
-        { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
-            val cal = Calendar.getInstance()
-            cal.set(year, month, dayOfMonth, 12, 0, 0)
-            deliveryTimestamp = cal.timeInMillis
-        },
-        calendar.get(Calendar.YEAR),
-        calendar.get(Calendar.MONTH),
-        calendar.get(Calendar.DAY_OF_MONTH)
-    )
+    val datePickerDialog = remember(order.orderDate) {
+        DatePickerDialog(
+            context,
+            { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
+                val cal = Calendar.getInstance()
+                cal.set(year, month, dayOfMonth, 12, 0, 0)
+                deliveryTimestamp = cal.timeInMillis
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).apply {
+            datePicker.minDate = order.orderDate
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
