@@ -564,7 +564,7 @@ fun EditMenuPriceDialog(
                             .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        listOf("250 g", "500 g", "1 KG", "1.5 KG", "2 KG", "Custom").forEach { preset ->
+                        com.ovenlybytes.app.util.AppConstants.DEFAULT_PORTION_PRESETS.forEach { preset ->
                             SuggestionChip(
                                 onClick = {
                                     customVariants = customVariants + com.ovenlybytes.app.data.local.entities.PortionVariant(preset, 0.0)
@@ -732,13 +732,13 @@ fun AddNewMenuItemDialog(
                                     category = cat
                                     if (cat == MenuCategory.BROWNIES || cat == MenuCategory.TEA_CAKES || cat == MenuCategory.COOKIES) {
                                         customVariants = listOf(
-                                            com.ovenlybytes.app.data.local.entities.PortionVariant("250 g", 0.0),
-                                            com.ovenlybytes.app.data.local.entities.PortionVariant("500 g", 0.0)
+                                            com.ovenlybytes.app.data.local.entities.PortionVariant(com.ovenlybytes.app.util.AppConstants.PORTION_250G, 0.0),
+                                            com.ovenlybytes.app.data.local.entities.PortionVariant(com.ovenlybytes.app.util.AppConstants.PORTION_500G, 0.0)
                                         )
                                     } else {
                                         customVariants = listOf(
-                                            com.ovenlybytes.app.data.local.entities.PortionVariant("500 g", 0.0),
-                                            com.ovenlybytes.app.data.local.entities.PortionVariant("1 KG", 0.0)
+                                            com.ovenlybytes.app.data.local.entities.PortionVariant(com.ovenlybytes.app.util.AppConstants.PORTION_500G, 0.0),
+                                            com.ovenlybytes.app.data.local.entities.PortionVariant(com.ovenlybytes.app.util.AppConstants.PORTION_1KG, 0.0)
                                         )
                                     }
                                 },
@@ -798,7 +798,7 @@ fun AddNewMenuItemDialog(
                             .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        listOf("250 g", "500 g", "1 KG", "1.5 KG", "2 KG", "Custom").forEach { preset ->
+                        com.ovenlybytes.app.util.AppConstants.DEFAULT_PORTION_PRESETS.forEach { preset ->
                             SuggestionChip(
                                 onClick = {
                                     customVariants = customVariants + com.ovenlybytes.app.data.local.entities.PortionVariant(preset, 0.0)

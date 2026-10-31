@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
         OrderItemEntity::class,
         InventoryEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class OvenlyDatabase : RoomDatabase() {
@@ -40,15 +40,30 @@ abstract class OvenlyDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: OvenlyDatabase? = null
 
+        val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Migration logic for v1 to v2 if needed
+            }
+        }
+
+        val MIGRATION_2_3 = object : androidx.room.migration.Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE menu_items ADD COLUMN customVariantsJson TEXT NOT NULL DEFAULT ''")
+                } catch (_: Exception) {}
+            }
+        }
+
         fun getDatabase(context: Context, scope: CoroutineScope): OvenlyDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     OvenlyDatabase::class.java,
-                    "ovenly_bites_database.db"
+                    com.ovenlybytes.app.util.AppConstants.DATABASE_NAME
                 )
                     .addCallback(OvenlyDatabaseCallback(scope))
-                    .fallbackToDestructiveMigration()
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .fallbackToDestructiveMigrationOnDowngrade(true)
                     .build()
                 INSTANCE = instance
                 instance

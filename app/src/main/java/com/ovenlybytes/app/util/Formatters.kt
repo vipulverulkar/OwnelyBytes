@@ -20,7 +20,7 @@ object Formatters {
     private val dateTimeFormat = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
 
     fun formatCurrency(amount: Double): String {
-        return "₹${String.format(Locale.US, "%,d", amount.toLong())}"
+        return "${AppConstants.CURRENCY_SYMBOL}${String.format(Locale.US, "%,d", amount.toLong())}"
     }
 
     fun formatDate(timestamp: Long): String {

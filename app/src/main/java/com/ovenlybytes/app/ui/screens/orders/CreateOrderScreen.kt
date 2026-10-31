@@ -1350,7 +1350,7 @@ fun AddMenuItemDialog(
     // States for Menu Selection Tab
     var selectedCategory by remember { mutableStateOf<MenuCategory?>(null) }
     var selectedMenuItem by remember { mutableStateOf<MenuItemEntity?>(null) }
-    var selectedVariant by remember { mutableStateOf("½ KG") }
+    var selectedVariant by remember { mutableStateOf(com.ovenlybytes.app.util.AppConstants.PORTION_HALF_KG) }
     var customVariantText by remember { mutableStateOf("") }
     var customPriceText by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf(1) }
@@ -1372,7 +1372,7 @@ fun AddMenuItemDialog(
         if (selectedMenuItem == null) 0.0
         else if (selectedMenuItem!!.isSeasonalRate) {
             customPriceText.toDoubleOrNull() ?: 0.0
-        } else if (selectedVariant == "+ Custom Size / Price") {
+        } else if (selectedVariant == com.ovenlybytes.app.util.AppConstants.PORTION_CUSTOM_ADD) {
             customPriceText.toDoubleOrNull() ?: 0.0
         } else {
             val item = selectedMenuItem!!
@@ -1384,11 +1384,11 @@ fun AddMenuItemDialog(
 
             when {
                 matchedConfigured != null -> matchedConfigured.price
-                selectedVariant == "250 g" -> baseHalfKgPrice / 2.0
-                selectedVariant == "500 g" || selectedVariant == "½ KG" -> baseHalfKgPrice
-                selectedVariant == "1 KG" -> base1KgPrice
-                selectedVariant == "1.5 KG" -> base1KgPrice * 1.5
-                selectedVariant == "2 KG" -> if (item.price3 > 0) item.price3 else base1KgPrice * 2.0
+                selectedVariant == com.ovenlybytes.app.util.AppConstants.PORTION_250G -> baseHalfKgPrice / 2.0
+                selectedVariant == com.ovenlybytes.app.util.AppConstants.PORTION_500G || selectedVariant == com.ovenlybytes.app.util.AppConstants.PORTION_HALF_KG -> baseHalfKgPrice
+                selectedVariant == com.ovenlybytes.app.util.AppConstants.PORTION_1KG -> base1KgPrice
+                selectedVariant == com.ovenlybytes.app.util.AppConstants.PORTION_1_5KG -> base1KgPrice * 1.5
+                selectedVariant == com.ovenlybytes.app.util.AppConstants.PORTION_2KG -> if (item.price3 > 0) item.price3 else base1KgPrice * 2.0
                 else -> item.price1
             }
         }
@@ -1516,12 +1516,12 @@ fun AddMenuItemDialog(
                                         val variantsList = remember(item) {
                                             buildList {
                                                 configuredVariants.forEach { add(it.name) }
-                                                add("250 g")
-                                                add("500 g")
-                                                add("1 KG")
-                                                add("1.5 KG")
-                                                add("2 KG")
-                                                add("+ Custom Size / Price")
+                                                add(com.ovenlybytes.app.util.AppConstants.PORTION_250G)
+                                                add(com.ovenlybytes.app.util.AppConstants.PORTION_500G)
+                                                add(com.ovenlybytes.app.util.AppConstants.PORTION_1KG)
+                                                add(com.ovenlybytes.app.util.AppConstants.PORTION_1_5KG)
+                                                add(com.ovenlybytes.app.util.AppConstants.PORTION_2KG)
+                                                add(com.ovenlybytes.app.util.AppConstants.PORTION_CUSTOM_ADD)
                                             }.distinct()
                                         }
 
@@ -1531,16 +1531,16 @@ fun AddMenuItemDialog(
                                         variantsList.forEach { variantLabel ->
                                             val matchedConfigured = configuredVariants.find { it.name.equals(variantLabel, ignoreCase = true) }
                                             val vPrice = when {
-                                                variantLabel == "+ Custom Size / Price" -> customPriceText.toDoubleOrNull() ?: 0.0
+                                                variantLabel == com.ovenlybytes.app.util.AppConstants.PORTION_CUSTOM_ADD -> customPriceText.toDoubleOrNull() ?: 0.0
                                                 matchedConfigured != null -> matchedConfigured.price
-                                                variantLabel == "250 g" -> baseHalfKgPrice / 2.0
-                                                variantLabel == "500 g" || variantLabel == "½ KG" -> baseHalfKgPrice
-                                                variantLabel == "1 KG" -> base1KgPrice
-                                                variantLabel == "1.5 KG" -> base1KgPrice * 1.5
-                                                variantLabel == "2 KG" -> if (item.price3 > 0) item.price3 else base1KgPrice * 2.0
+                                                variantLabel == com.ovenlybytes.app.util.AppConstants.PORTION_250G -> baseHalfKgPrice / 2.0
+                                                variantLabel == com.ovenlybytes.app.util.AppConstants.PORTION_500G || variantLabel == com.ovenlybytes.app.util.AppConstants.PORTION_HALF_KG -> baseHalfKgPrice
+                                                variantLabel == com.ovenlybytes.app.util.AppConstants.PORTION_1KG -> base1KgPrice
+                                                variantLabel == com.ovenlybytes.app.util.AppConstants.PORTION_1_5KG -> base1KgPrice * 1.5
+                                                variantLabel == com.ovenlybytes.app.util.AppConstants.PORTION_2KG -> if (item.price3 > 0) item.price3 else base1KgPrice * 2.0
                                                 else -> item.price1
                                             }
-                                            val chipLabel = if (variantLabel == "+ Custom Size / Price") {
+                                            val chipLabel = if (variantLabel == com.ovenlybytes.app.util.AppConstants.PORTION_CUSTOM_ADD) {
                                                 "+ Custom"
                                             } else {
                                                 "$variantLabel (₹${vPrice.toInt()})"
@@ -1549,7 +1549,7 @@ fun AddMenuItemDialog(
                                                 selected = selectedVariant == variantLabel,
                                                 onClick = {
                                                     selectedVariant = variantLabel
-                                                    if (variantLabel == "+ Custom Size / Price" && customPriceText.isBlank()) {
+                                                    if (variantLabel == com.ovenlybytes.app.util.AppConstants.PORTION_CUSTOM_ADD && customPriceText.isBlank()) {
                                                         customPriceText = item.price1.toInt().toString()
                                                     }
                                                 },
@@ -1557,7 +1557,7 @@ fun AddMenuItemDialog(
                                             )
                                         }
                                     }
-                                    if (selectedVariant == "+ Custom Size / Price") {
+                                    if (selectedVariant == com.ovenlybytes.app.util.AppConstants.PORTION_CUSTOM_ADD) {
                                         Spacer(modifier = Modifier.height(6.dp))
                                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                             OutlinedTextField(
@@ -1673,7 +1673,7 @@ fun AddMenuItemDialog(
                 Button(
                     onClick = {
                         if (selectedMenuItem != null) {
-                            val finalVariantName = if (selectedVariant == "+ Custom Size / Price") {
+                            val finalVariantName = if (selectedVariant == com.ovenlybytes.app.util.AppConstants.PORTION_CUSTOM_ADD) {
                                 customVariantText.ifBlank { "Custom Portion" }
                             } else {
                                 selectedVariant

@@ -93,7 +93,7 @@ object WhatsAppHelper {
         // Clean phone number (strip spaces, dashes, ensure country code)
         var cleanPhone = rawPhone.replace(Regex("[^0-9]"), "")
         if (cleanPhone.length == 10) {
-            cleanPhone = "91$cleanPhone" // Default India country code
+            cleanPhone = "${AppConstants.DEFAULT_COUNTRY_CODE}$cleanPhone" // Default India country code
         }
 
         try {

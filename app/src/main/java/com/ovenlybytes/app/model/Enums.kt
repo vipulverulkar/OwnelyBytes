@@ -1,5 +1,7 @@
 package com.ovenlybytes.app.model
 
+import com.ovenlybytes.app.util.AppConstants
+
 enum class OrderSource(val displayName: String, val iconName: String) {
     WHATSAPP("WhatsApp", "chat"),
     PHONE("Phone Call", "call"),
@@ -28,12 +30,14 @@ enum class PaymentMode(val displayName: String) {
     NET_BANKING("Net Banking")
 }
 
+
+
 enum class MenuCategory(val displayName: String, val defaultSizes: Pair<String, String>) {
-    CLASSIC_CAKES("Classic Cakes", Pair("½ KG", "1 KG")),
-    PREMIUM_COLLECTION("Premium Collection", Pair("½ KG", "1 KG")),
-    BROWNIES("Brownies", Pair("250 g", "500 g")),
-    TEA_CAKES("Tea Cakes", Pair("250 g", "500 g")),
-    COOKIES("Cookies", Pair("250 g", "500 g")),
+    CLASSIC_CAKES("Classic Cakes", Pair(AppConstants.PORTION_HALF_KG, AppConstants.PORTION_1KG)),
+    PREMIUM_COLLECTION("Premium Collection", Pair(AppConstants.PORTION_HALF_KG, AppConstants.PORTION_1KG)),
+    BROWNIES("Brownies", Pair(AppConstants.PORTION_250G, AppConstants.PORTION_500G)),
+    TEA_CAKES("Tea Cakes", Pair(AppConstants.PORTION_250G, AppConstants.PORTION_500G)),
+    COOKIES("Cookies", Pair(AppConstants.PORTION_250G, AppConstants.PORTION_500G)),
     CUSTOM("Custom / Seasonal", Pair("Standard", "Large"))
 }
 

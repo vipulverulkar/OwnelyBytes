@@ -5,11 +5,11 @@ import android.content.SharedPreferences
 import com.ovenlybytes.app.model.ShopDetails
 
 class ShopPreferences(context: Context) {
-    private val prefs: SharedPreferences = context.getSharedPreferences("ovenly_shop_settings", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = context.getSharedPreferences(AppConstants.PREFS_NAME, Context.MODE_PRIVATE)
 
     fun getShopDetails(): ShopDetails {
         return ShopDetails(
-            shopName = prefs.getString(KEY_SHOP_NAME, "Ovenly Bites") ?: "Ovenly Bites",
+            shopName = prefs.getString(KEY_SHOP_NAME, AppConstants.DEFAULT_SHOP_NAME) ?: AppConstants.DEFAULT_SHOP_NAME,
             tagline = prefs.getString(KEY_TAGLINE, "Freshly Baked With Love ❤️") ?: "Freshly Baked With Love ❤️",
             ownerName = prefs.getString(KEY_OWNER_NAME, "Ananya Gupta") ?: "Ananya Gupta",
             phone = prefs.getString(KEY_PHONE, "9876543210") ?: "9876543210",
