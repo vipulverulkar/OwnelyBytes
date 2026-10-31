@@ -49,7 +49,7 @@ Ovenly Bytes incorporates enterprise-grade encryption to protect customer contac
 
 When you launch Ovenly Bytes, the **Home Dashboard** displays your key operational indicators (KPIs):
 
-![Home Dashboard](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/01_dashboard.png)
+![Home Dashboard](./Screenshot/01_dashboard.png)
 
 - **Active Orders Summary**: Shows pending, baking, ready for pickup, and delivered order counts.
 - **Financial Metrics**: Real-time total revenue and total balance pending collection.
@@ -63,7 +63,7 @@ When you launch Ovenly Bytes, the **Home Dashboard** displays your key operation
 
 To create a new order, tap the **"Take New Order"** button on the Dashboard or Orders list:
 
-![New Customer Order Form](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/06_new_order.png)
+![New Customer Order Form](./Screenshot/06_new_order.png)
 
 ### Step 1: Order Channel & Delivery Schedule Policy
 1. Select the order channel: **WhatsApp (🟢)**, **Phone Call (🔵)**, or **Walk-in (🟣)**.
@@ -74,7 +74,7 @@ To create a new order, tap the **"Take New Order"** button on the Dashboard or O
 ### Step 2: Customer Selection or Registration
 1. Search and select an existing customer from your directory, or enter details for a new customer (Name, WhatsApp Phone Number, Delivery Address, Dietary Notes).
 
-![Paginated & Searchable Saved Client Picker](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/07_saved_clients.png)
+![Paginated & Searchable Saved Client Picker](./Screenshot/07_saved_clients.png)
 
 ### Step 3: Item Selection & Customizations
 1. Browse menu categories or search items.
@@ -98,7 +98,7 @@ Each order progresses through 5 clear stages:
 4. **Delivered**: Order handed over and final balance collected.
 5. **Cancelled**: Order cancelled.
 
-![Orders List Tracking](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/02_orders.png)
+![Orders List Tracking](./Screenshot/02_orders.png)
 
 ---
 
@@ -119,7 +119,7 @@ In the **Orders** tab, customize how your orders are sorted:
 
 Go to the **Reports** tab to review your bakery financials:
 
-![Financial Analytics & Revenue Reports](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/03_reports.png)
+![Financial Analytics & Revenue Reports](./Screenshot/03_reports.png)
 
 - **Primary KPIs**: Total Orders, Total Revenue, Total Pending Balance.
 - **Advanced Metrics**: **Average Order Value (AOV)** & **Payment Collection Rate (%)**.
@@ -133,7 +133,7 @@ Go to the **Reports** tab to review your bakery financials:
 
 Go to the **Menu** tab to view and manage your product catalog:
 
-![Menu Catalog Screen](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/04_menu.png)
+![Menu Catalog Screen](./Screenshot/04_menu.png)
 
 - **Unlimited Custom Portions**: Add unlimited custom portion sizes and prices (e.g. *1.5 KG, 2 KG, 6-Inch, 8-Inch, Box of 6*) to any menu item.
 - **Preset Size Quick Chips**: 1-tap preset chips for 250 g, 500 g, ½ KG, 1 KG, 1.5 KG, and 2 KG.
@@ -165,7 +165,7 @@ Go to **Settings ➔ Client CRM** to manage customer records:
 
 Go to **Settings** to customize your bakery profile:
 
-![Shop Settings & Backup Hub](/home/vipul/.cache/Google/AndroidStudio2026.2.2/projects/ovenlybytes.b89e295f/.artifacts/51723015-b9bf-4b91-86e8-7b2dc40202ec/05_settings.png)
+![Shop Settings & Backup Hub](./Screenshot/05_settings.png)
 
 - **Shop Details**: Shop Name, Tagline, Owner Name, WhatsApp Contact Phone, Email Address, Full Shop Address, FSSAI License Number, and GSTIN.
 - **100% Eggless Badge**: Enable or disable the green eggless indicator across the app top bar and receipts.
