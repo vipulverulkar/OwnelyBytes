@@ -497,9 +497,9 @@ abstract class OvenlyDatabase : RoomDatabase() {
             // 3. POPULATE INITIAL SAMPLE CUSTOMERS & ORDERS (For immediate preview)
             val custId1 = customerDao.insertCustomer(
                 CustomerEntity(
-                    name = "Priya Sharma",
+                    name = "John Doe",
                     phone = "9876543210",
-                    email = "priya.sharma@example.com",
+                    email = "john.doe@example.com",
                     address = "Flat 402, Sunshine Heights, MG Road",
                     notes = "Prefers less sweet cakes, very punctual"
                 )
@@ -507,9 +507,9 @@ abstract class OvenlyDatabase : RoomDatabase() {
 
             val custId2 = customerDao.insertCustomer(
                 CustomerEntity(
-                    name = "Rohit Verma",
+                    name = "Jane Smith",
                     phone = "9811223344",
-                    email = "rohit.verma@example.com",
+                    email = "jane.smith@example.com",
                     address = "Villa 12, Green Meadows, Sector 15",
                     notes = "Regular customer, orders for office celebrations"
                 )

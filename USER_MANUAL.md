@@ -80,7 +80,7 @@ To create a new order, tap the **"Take New Order"** button on the Dashboard or O
 1. Browse menu categories or search items.
 2. Select portion weight/variant (e.g., ½ KG, 1 KG, 1.5 KG, 2 KG, 250 g, 500 g, or custom sizes) and quantity.
 3. Tap **"+ Custom Item"** to add ad-hoc items on the fly.
-4. Enter piped message on cake (e.g. *"Happy Birthday Rahul ❤️"*).
+4. Enter piped message on cake (e.g. *"Happy Birthday Alex ❤️"*).
 5. Add customization decoration notes and extra charges if applicable.
 
 ### Step 4: Advance Payment & Balance Calculation

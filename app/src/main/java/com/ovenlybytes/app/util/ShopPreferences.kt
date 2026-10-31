@@ -27,7 +27,7 @@ class ShopPreferences(context: Context) {
         return ShopDetails(
             shopName = prefs.getString(KEY_SHOP_NAME, AppConstants.DEFAULT_SHOP_NAME) ?: AppConstants.DEFAULT_SHOP_NAME,
             tagline = prefs.getString(KEY_TAGLINE, "Freshly Baked With Love ❤️") ?: "Freshly Baked With Love ❤️",
-            ownerName = prefs.getString(KEY_OWNER_NAME, "Ananya Gupta") ?: "Ananya Gupta",
+            ownerName = prefs.getString(KEY_OWNER_NAME, "Alex Baker") ?: "Alex Baker",
             phone = prefs.getString(KEY_PHONE, "9876543210") ?: "9876543210",
             email = prefs.getString(KEY_EMAIL, "contact@ovenlybites.com") ?: "contact@ovenlybites.com",
             address = prefs.getString(KEY_ADDRESS, "Shop #4, Baker Street, Connaught Place, New Delhi") ?: "Shop #4, Baker Street, Connaught Place, New Delhi",
