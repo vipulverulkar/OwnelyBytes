@@ -1,18 +1,16 @@
 package com.ovenlybytes.app.ui.theme
 
 import android.app.Activity
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-
-import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.ui.graphics.Color
 import com.ovenlybytes.app.model.AppTheme
 
 fun getColorSchemeForTheme(appTheme: AppTheme): ColorScheme {
@@ -47,7 +45,21 @@ fun getColorSchemeForTheme(appTheme: AppTheme): ColorScheme {
             onSurfaceVariant = Color(0xFF880E4F),
             outline = Color(0xFFF48FB1)
         )
-        AppTheme.HONEY_VANILLA -> lightColorScheme(
+        AppTheme.ROYAL_RED_VELVET -> lightColorScheme(
+            primary = Color(0xFF800020),
+            onPrimary = Color(0xFFFFFAF6),
+            primaryContainer = Color(0xFFFFCDD2),
+            onPrimaryContainer = Color(0xFF33000C),
+            secondary = Color(0xFFB71C1C),
+            background = Color(0xFFFFFAF6),
+            onBackground = Color(0xFF210008),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF210008),
+            surfaceVariant = Color(0xFFFFEBEE),
+            onSurfaceVariant = Color(0xFF800020),
+            outline = Color(0xFFEF9A9A)
+        )
+        AppTheme.GOLDEN_VANILLA -> lightColorScheme(
             primary = Color(0xFFB45309),
             onPrimary = Color(0xFFFFFDF5),
             primaryContainer = Color(0xFFFDE68A),
@@ -60,6 +72,20 @@ fun getColorSchemeForTheme(appTheme: AppTheme): ColorScheme {
             surfaceVariant = Color(0xFFFEF3C7),
             onSurfaceVariant = Color(0xFF78350F),
             outline = Color(0xFFFCD34D)
+        )
+        AppTheme.SALTED_CARAMEL -> lightColorScheme(
+            primary = Color(0xFF9F5113),
+            onPrimary = Color(0xFFFFF8F0),
+            primaryContainer = Color(0xFFFED7AA),
+            onPrimaryContainer = Color(0xFF431D04),
+            secondary = Color(0xFFD97706),
+            background = Color(0xFFFFF8F0),
+            onBackground = Color(0xFF2B1202),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF2B1202),
+            surfaceVariant = Color(0xFFFFEDD5),
+            onSurfaceVariant = Color(0xFF7C2D12),
+            outline = Color(0xFFFDBA74)
         )
         AppTheme.PISTACHIO_MATCHA -> lightColorScheme(
             primary = Color(0xFF2D5A27),
@@ -75,6 +101,20 @@ fun getColorSchemeForTheme(appTheme: AppTheme): ColorScheme {
             onSurfaceVariant = Color(0xFF1B5E20),
             outline = Color(0xFFA5D6A7)
         )
+        AppTheme.EMERALD_MINT -> lightColorScheme(
+            primary = Color(0xFF1B4332),
+            onPrimary = Color(0xFFF0F7F4),
+            primaryContainer = Color(0xFFB7E4C7),
+            onPrimaryContainer = Color(0xFF081C15),
+            secondary = Color(0xFF2D6A4F),
+            background = Color(0xFFF0F7F4),
+            onBackground = Color(0xFF081C15),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF081C15),
+            surfaceVariant = Color(0xFFD8F3DC),
+            onSurfaceVariant = Color(0xFF1B4332),
+            outline = Color(0xFF95D5B2)
+        )
         AppTheme.LEMON_CHIFFON -> lightColorScheme(
             primary = Color(0xFFA16207),
             onPrimary = Color(0xFFFFFCF0),
@@ -88,6 +128,20 @@ fun getColorSchemeForTheme(appTheme: AppTheme): ColorScheme {
             surfaceVariant = Color(0xFFFEF9C3),
             onSurfaceVariant = Color(0xFF713F12),
             outline = Color(0xFFFDE047)
+        )
+        AppTheme.LAVENDER_EARL_GREY -> lightColorScheme(
+            primary = Color(0xFF4A3B6B),
+            onPrimary = Color(0xFFF7F5FA),
+            primaryContainer = Color(0xFFDDD6FE),
+            onPrimaryContainer = Color(0xFF1E1B4B),
+            secondary = Color(0xFF6B5B95),
+            background = Color(0xFFF7F5FA),
+            onBackground = Color(0xFF1E1533),
+            surface = Color(0xFFFFFFFF),
+            onSurface = Color(0xFF1E1533),
+            surfaceVariant = Color(0xFFECE7F6),
+            onSurfaceVariant = Color(0xFF382A52),
+            outline = Color(0xFFC4B5FD)
         )
         AppTheme.BLUEBERRY_MACARON -> lightColorScheme(
             primary = Color(0xFF5B21B6),
@@ -117,19 +171,19 @@ fun getColorSchemeForTheme(appTheme: AppTheme): ColorScheme {
             onSurfaceVariant = Color(0xFF9F1239),
             outline = Color(0xFFFDBA74)
         )
-        AppTheme.DARK_MOCHA -> darkColorScheme(
-            primary = Color(0xFFFFB300),
-            onPrimary = Color(0xFF121212),
-            primaryContainer = Color(0xFF3E2723),
-            onPrimaryContainer = Color(0xFFFFECB3),
-            secondary = Color(0xFFFF8F00),
-            background = Color(0xFF121212),
-            onBackground = Color(0xFFEFEBE9),
-            surface = Color(0xFF1E1E1E),
-            onSurface = Color(0xFFEFEBE9),
-            surfaceVariant = Color(0xFF2A1C18),
-            onSurfaceVariant = Color(0xFFD7CCC8),
-            outline = Color(0xFF4E342E)
+        AppTheme.MIDNIGHT_TRUFFLE -> darkColorScheme(
+            primary = Color(0xFFF59E0B),
+            onPrimary = Color(0xFF0F0F12),
+            primaryContainer = Color(0xFF332002),
+            onPrimaryContainer = Color(0xFFFDE68A),
+            secondary = Color(0xFFD97706),
+            background = Color(0xFF0F0F12),
+            onBackground = Color(0xFFF3F4F6),
+            surface = Color(0xFF1A181C),
+            onSurface = Color(0xFFF3F4F6),
+            surfaceVariant = Color(0xFF262329),
+            onSurfaceVariant = Color(0xFFE5E7EB),
+            outline = Color(0xFF4B4552)
         )
     }
 }
@@ -147,7 +201,7 @@ fun OvenlyBytesTheme(
             val window = (view.context as? Activity)?.window
             if (window != null) {
                 window.statusBarColor = colorScheme.primary.toArgb()
-                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = (appTheme == AppTheme.DARK_MOCHA)
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = (appTheme == AppTheme.MIDNIGHT_TRUFFLE)
             }
         }
     }
@@ -158,4 +212,3 @@ fun OvenlyBytesTheme(
         content = content
     )
 }
-

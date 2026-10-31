@@ -217,7 +217,10 @@ class BakeryRepository(
         menuItemDao.insertMenuItems(menuItems)
         inventoryDao.insertItems(inventory)
         orderDao.insertOrders(orders)
-        orderDao.insertOrderItems(orderItems)
+
+        val validOrderIds = orders.map { it.id }.toSet()
+        val validOrderItems = orderItems.filter { it.orderId in validOrderIds }
+        orderDao.insertOrderItems(validOrderItems)
     }
 }
 

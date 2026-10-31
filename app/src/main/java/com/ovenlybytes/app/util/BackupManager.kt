@@ -236,17 +236,19 @@ object BackupManager {
                 } else if (trimmed.startsWith("INSERT INTO order_items", ignoreCase = true)) {
                     val values = extractSqlValues(trimmed)
                     if (values.size >= 9) {
+                        val rawMId = values[2].trim().lowercase()
+                        val mId = if (rawMId != "null" && rawMId.isNotBlank()) rawMId.toLongOrNull() else null
                         orderItemsList.add(
                             OrderItemEntity(
-                                id = values[0].toLong(),
-                                orderId = values[1].toLong(),
-                                menuItemId = values[2].toLong(),
+                                id = values[0].toLongOrNull() ?: 0L,
+                                orderId = values[1].toLongOrNull() ?: 0L,
+                                menuItemId = mId,
                                 itemName = unquoteSql(values[3]),
                                 category = unquoteSql(values[4]),
                                 variantName = unquoteSql(values[5]),
-                                unitPrice = values[6].toDouble(),
-                                quantity = values[7].toInt(),
-                                itemTotal = values[8].toDouble()
+                                unitPrice = values[6].toDoubleOrNull() ?: 0.0,
+                                quantity = values[7].toIntOrNull() ?: 1,
+                                itemTotal = values[8].toDoubleOrNull() ?: 0.0
                             )
                         )
                     }
@@ -470,17 +472,19 @@ object BackupManager {
                     }
                     "ORDER_ITEMS" -> {
                         if (row.size >= 9) {
+                            val rawMId = row[2].trim().lowercase()
+                            val mId = if (rawMId != "null" && rawMId.isNotBlank()) rawMId.toLongOrNull() else null
                             orderItemsList.add(
                                 OrderItemEntity(
-                                    id = row[0].toLong(),
-                                    orderId = row[1].toLong(),
-                                    menuItemId = row[2].toLong(),
+                                    id = row[0].toLongOrNull() ?: 0L,
+                                    orderId = row[1].toLongOrNull() ?: 0L,
+                                    menuItemId = mId,
                                     itemName = unescapeCsv(row[3]),
                                     category = unescapeCsv(row[4]),
                                     variantName = unescapeCsv(row[5]),
-                                    unitPrice = row[6].toDouble(),
-                                    quantity = row[7].toInt(),
-                                    itemTotal = row[8].toDouble()
+                                    unitPrice = row[6].toDoubleOrNull() ?: 0.0,
+                                    quantity = row[7].toIntOrNull() ?: 1,
+                                    itemTotal = row[8].toDoubleOrNull() ?: 0.0
                                 )
                             )
                         }
@@ -772,17 +776,20 @@ object BackupManager {
                 val arr = root.getJSONArray("orderItems")
                 for (i in 0 until arr.length()) {
                     val obj = arr.getJSONObject(i)
+                    val rawMId = if (obj.has("menuItemId") && !obj.isNull("menuItemId")) obj.optLong("menuItemId", -1L) else null
+                    val mId = if (rawMId != null && rawMId > 0) rawMId else null
+
                     orderItemsList.add(
                         OrderItemEntity(
-                            id = obj.getLong("id"),
-                            orderId = obj.getLong("orderId"),
-                            menuItemId = obj.getLong("menuItemId"),
-                            itemName = obj.getString("itemName"),
-                            category = obj.getString("category"),
-                            variantName = obj.getString("variantName"),
-                            unitPrice = obj.getDouble("unitPrice"),
-                            quantity = obj.getInt("quantity"),
-                            itemTotal = obj.getDouble("itemTotal")
+                            id = obj.optLong("id", 0L),
+                            orderId = obj.optLong("orderId", 0L),
+                            menuItemId = mId,
+                            itemName = obj.optString("itemName", "Item"),
+                            category = obj.optString("category", ""),
+                            variantName = obj.optString("variantName", "Standard"),
+                            unitPrice = obj.optDouble("unitPrice", 0.0),
+                            quantity = obj.optInt("quantity", 1),
+                            itemTotal = obj.optDouble("itemTotal", 0.0)
                         )
                     )
                 }

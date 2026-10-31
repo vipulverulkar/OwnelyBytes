@@ -90,19 +90,22 @@ class SettingsViewModel(
         viewModelScope.launch {
             _backupUiState.value = BackupUiState.Loading
             val format = try {
-                val fileName = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                    val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                    if (nameIndex != -1 && cursor.moveToFirst()) {
-                        cursor.getString(nameIndex)
-                    } else ""
+                val sampleHeader = context.contentResolver.openInputStream(uri)?.use { stream ->
+                    val reader = java.io.BufferedReader(java.io.InputStreamReader(stream, "UTF-8"))
+                    val charArray = CharArray(1024)
+                    val read = reader.read(charArray, 0, 1024)
+                    if (read > 0) String(charArray, 0, read) else ""
                 } ?: ""
+
+                val trimmed = sampleHeader.trim()
                 when {
-                    fileName.endsWith(".sql", ignoreCase = true) -> com.ovenlybytes.app.util.BackupFormat.SQL
-                    fileName.endsWith(".csv", ignoreCase = true) -> com.ovenlybytes.app.util.BackupFormat.CSV
+                    trimmed.startsWith("{") || sampleHeader.contains("\"appName\"") || sampleHeader.contains("\"shopDetails\"") -> com.ovenlybytes.app.util.BackupFormat.JSON
+                    trimmed.startsWith("--") || sampleHeader.contains("INSERT INTO", ignoreCase = true) -> com.ovenlybytes.app.util.BackupFormat.SQL
+                    trimmed.startsWith("#") || sampleHeader.contains("SECTION:", ignoreCase = true) || sampleHeader.contains("ShopName,") -> com.ovenlybytes.app.util.BackupFormat.CSV
                     else -> com.ovenlybytes.app.util.BackupFormat.JSON
                 }
             } catch (e: Exception) {
-                com.ovenlybytes.app.util.BackupFormat.SQL
+                com.ovenlybytes.app.util.BackupFormat.JSON
             }
 
             val result = BackupManager.importBackup(context, uri, format, shopPreferences, repository)

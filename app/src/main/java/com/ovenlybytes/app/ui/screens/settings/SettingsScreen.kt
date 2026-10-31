@@ -323,22 +323,39 @@ fun SettingsScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
-                                        // Color Swatch Circle
-                                        Box(
-                                            modifier = Modifier
-                                                .size(36.dp)
-                                                .clip(CircleShape)
-                                                .background(theme.primaryColor),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            if (isSelected) {
-                                                Icon(
-                                                    Icons.Default.Check,
-                                                    contentDescription = null,
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
+                                        // 3-Color Swatch Preview
+                                        Row(horizontalArrangement = Arrangement.spacedBy((-8).dp)) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(28.dp)
+                                                    .clip(CircleShape)
+                                                    .background(theme.primaryColor)
+                                                    .border(1.5.dp, Color.White, CircleShape),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                if (isSelected) {
+                                                    Icon(
+                                                        Icons.Default.Check,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                }
                                             }
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(28.dp)
+                                                    .clip(CircleShape)
+                                                    .background(theme.secondaryColor)
+                                                    .border(1.5.dp, Color.White, CircleShape)
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(28.dp)
+                                                    .clip(CircleShape)
+                                                    .background(theme.backgroundColor)
+                                                    .border(1.5.dp, WarmBorder, CircleShape)
+                                            )
                                         }
 
                                         Column {
