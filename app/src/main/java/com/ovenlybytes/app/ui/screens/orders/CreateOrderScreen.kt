@@ -543,7 +543,7 @@ fun CreateOrderScreen(
                                 maxLines = 2
                             )
                         } else {
-                            // Searchable & Paginated Saved Customer Directory
+                            // Smart Searchable Customer Directory
                             if (existingCustomers.isEmpty()) {
                                 Text("No saved customers yet. Create a new one above.", color = TextMuted)
                             } else {
@@ -555,7 +555,7 @@ fun CreateOrderScreen(
                                             customerSearchQuery = it
                                             customerPage = 0 // Reset to first page on search
                                         },
-                                        placeholder = { Text("Search client by name, phone or address...") },
+                                        placeholder = { Text("Search client by name or phone...") },
                                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                                         trailingIcon = {
                                             if (customerSearchQuery.isNotBlank()) {
@@ -576,12 +576,11 @@ fun CreateOrderScreen(
                                         if (customerSearchQuery.isBlank()) existingCustomers
                                         else existingCustomers.filter {
                                             it.name.contains(customerSearchQuery, ignoreCase = true) ||
-                                            it.phone.contains(customerSearchQuery, ignoreCase = true) ||
-                                            it.address.contains(customerSearchQuery, ignoreCase = true)
+                                            it.phone.contains(customerSearchQuery, ignoreCase = true)
                                         }
                                     }
 
-                                    val pageSize = 5
+                                    val pageSize = 3
                                     val totalPages = maxOf(1, (filteredSavedCustomers.size + pageSize - 1) / pageSize)
                                     val currentPage = customerPage.coerceIn(0, totalPages - 1)
 
@@ -602,7 +601,7 @@ fun CreateOrderScreen(
                                             modifier = Modifier.padding(vertical = 8.dp)
                                         )
                                     } else {
-                                        // Customer Cards List (5 items per page)
+                                        // Customer Cards List (3 items per page)
                                         paginatedCustomers.forEach { cust ->
                                             val isSelected = selectedExistingCustomer?.id == cust.id
                                             Surface(
@@ -633,7 +632,7 @@ fun CreateOrderScreen(
                                                         Spacer(modifier = Modifier.width(6.dp))
                                                         Column {
                                                             Text(cust.name, fontWeight = FontWeight.Bold)
-                                                            Text("${cust.phone} • ${cust.address.take(30)}", fontSize = 11.sp, color = TextSecondary)
+                                                            Text(cust.phone, fontSize = 11.sp, color = TextSecondary)
                                                         }
                                                     }
 
