@@ -97,7 +97,7 @@ object WhatsAppHelper {
             Hi $customerName!
             We have successfully received your payment for order *#OB-${order.id}*. 🍰✨
             Total Amount: ${Formatters.formatCurrency(order.totalAmount)}
-            Thank you for your business! We appreciate you choosing Ovenly Bites! ❤️
+            Thank you choosing Ovenly Bites! ❤️ looking forward to bake for you again!
         """.trimIndent()
     }
 
