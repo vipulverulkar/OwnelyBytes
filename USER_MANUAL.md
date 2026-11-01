@@ -98,6 +98,8 @@ Each order progresses through 5 clear stages:
 4. **Delivered**: Order handed over and final balance collected.
 5. **Cancelled**: Order cancelled.
 
+> **🎉 Bonus Action**: When an order's payment status is updated to **COMPLETED**, a new action button appears allowing you to instantly send a **"Payment Received - Thank You!"** appreciation alert to your customer via WhatsApp!
+
 ![Orders List Tracking](./Screenshot/02_orders.png)
 
 ---

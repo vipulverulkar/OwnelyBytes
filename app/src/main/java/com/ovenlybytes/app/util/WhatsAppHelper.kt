@@ -89,6 +89,18 @@ object WhatsAppHelper {
         """.trimIndent()
     }
 
+    fun formatPaymentReceivedMessage(orderWithDetails: OrderWithCustomerAndItems): String {
+        val order = orderWithDetails.order
+        val customerName = orderWithDetails.customer?.name ?: "Customer"
+        return """
+            ✅ *PAYMENT RECEIVED - THANK YOU!* ✅
+            Hi $customerName!
+            We have successfully received your payment for order *#OB-${order.id}*. 🍰✨
+            Total Amount: ${Formatters.formatCurrency(order.totalAmount)}
+            Thank you for your business! We appreciate you choosing Ovenly Bites! ❤️
+        """.trimIndent()
+    }
+
     fun openWhatsApp(context: Context, rawPhone: String, message: String) {
         // Clean phone number (strip spaces, dashes, ensure country code)
         var cleanPhone = rawPhone.replace(Regex("[^0-9]"), "")

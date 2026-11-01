@@ -298,7 +298,26 @@ fun OrderDetailScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Action 4: Direct Phone Call
+                        // Action 4: "Payment Received" Thank You Alert
+                        if (order.paymentStatus == com.ovenlybytes.app.model.PaymentStatus.COMPLETED.name) {
+                            OutlinedButton(
+                                onClick = {
+                                    val msg = WhatsAppHelper.formatPaymentReceivedMessage(orderDetails!!)
+                                    val phone = customer?.phone ?: ""
+                                    WhatsAppHelper.openWhatsApp(context, phone, msg)
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.VolunteerActivism, contentDescription = null, tint = StatusReady, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Send 'Payment Received' Thank You", color = PrimaryCocoa)
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        // Action 5: Direct Phone Call
                         Button(
                             onClick = {
                                 val phone = customer?.phone ?: ""

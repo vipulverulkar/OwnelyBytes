@@ -25,6 +25,7 @@
   - *Order Confirmation & Invoice*
   - *Baking Progress Notice* ("Your cake is baking with love in our oven!")
   - *Ready for Pickup / Out for Delivery Alert*
+  - *Payment Received & Thank You Alert*
 - **Native Phone Dialer**: Instant call to customer from order card or customer directory.
 
 ### 4. Order Sorting & Advanced Filtering
