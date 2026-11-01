@@ -3,6 +3,8 @@
 > **"Freshly Baked With Love ❤️ • 100% Eggless"**  
 > A modern, offline-first, hardware-encrypted Android bakery POS & management app built with **Kotlin**, **Jetpack Compose (Material 3)**, **SQLCipher**, and **SQLite (Room Database)**.
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 ---
 
 ## 🚀 Key Features
