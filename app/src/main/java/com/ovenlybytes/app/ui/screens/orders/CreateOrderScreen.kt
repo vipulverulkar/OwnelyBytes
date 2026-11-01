@@ -42,6 +42,7 @@ import com.ovenlybytes.app.data.local.entities.getAllVariants
 import com.ovenlybytes.app.model.*
 import com.ovenlybytes.app.ui.components.OvenlyTopAppBar
 import com.ovenlybytes.app.ui.theme.*
+import com.ovenlybytes.app.util.AppConstants
 import com.ovenlybytes.app.util.Formatters
 import com.ovenlybytes.app.util.WhatsAppHelper
 import kotlinx.coroutines.launch
@@ -1058,13 +1059,7 @@ fun CreateOrderScreen(
                                 .horizontalScroll(rememberScrollState()),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            listOf(
-                                "10:00 AM - 12:00 PM",
-                                "1:00 PM - 3:00 PM",
-                                "5:00 PM - 7:00 PM",
-                                "7:00 PM - 9:00 PM",
-                                "Anytime"
-                            ).forEach { slot ->
+                            AppConstants.DEFAULT_TIME_SLOTS.forEach { slot ->
                                 FilterChip(
                                     selected = deliveryTimeSlot == slot,
                                     onClick = { deliveryTimeSlot = slot },

@@ -24,7 +24,7 @@ enum class PaymentStatus(val displayName: String) {
 }
 
 enum class PaymentMode(val displayName: String) {
-    UPI("UPI / GPay / PhonePe"),
+    UPI("UPI"),
     CASH("Cash"),
     CARD("Card"),
     NET_BANKING("Net Banking")
