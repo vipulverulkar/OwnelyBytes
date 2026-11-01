@@ -26,11 +26,12 @@ val WalkInPurple = Color(0xFF7B1FA2)
 val WalkInPurpleBackground = Color(0xFFF3E5F5)
 
 // Status Colors
-val StatusReceived = Color(0xFFE65100)      // Vivid Orange
-val StatusBaking = Color(0xFFD84315)        // Deep Ochre / Baking Fire
-val StatusReady = Color(0xFF2E7D32)         // Fresh Mint Green
-val StatusDelivered = Color(0xFF388E3C)     // Success Green
-val StatusCancelled = Color(0xFFC62828)     // Red
+val StatusReceived = Color(0xFFE65100)        // Vivid Orange
+val StatusBaking = Color(0xFFD84315)          // Deep Ochre / Baking Fire
+val StatusReady = Color(0xFF00897B)           // Deep Mint Teal
+val StatusOutForDelivery = Color(0xFF0288D1)   // Sky Blue
+val StatusDelivered = Color(0xFF2E7D32)       // Success Green
+val StatusCancelled = Color(0xFFC62828)       // Red
 
 // Eggless & Health Badges
 val EgglessGreen = Color(0xFF2E7D32)

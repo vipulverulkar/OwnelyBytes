@@ -5,6 +5,7 @@ import android.widget.DatePicker
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -47,7 +48,8 @@ import java.util.Calendar
 fun OrderDetailScreen(
     orderId: Long,
     viewModel: OrdersViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToCreateOrder: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -105,6 +107,8 @@ fun OrderDetailScreen(
 
             // 1. ORDER STATUS PROGRESS TRACKER
             item {
+                var showCancelConfirmDialog by remember { mutableStateOf(false) }
+
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -123,110 +127,199 @@ fun OrderDetailScreen(
                             OrderStatusChip(statusName = order.orderStatus)
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                        // Status Progression Stepper
-                        val currentStatus = OrderStatus.values().find { it.name == order.orderStatus } ?: OrderStatus.RECEIVED
-                        val steps = listOf(OrderStatus.RECEIVED, OrderStatus.BAKING, OrderStatus.READY, OrderStatus.DELIVERED)
+                        // Visual 4-Stage Stepper
+                        if (order.orderStatus != OrderStatus.CANCELLED.name) {
+                            val currentStep = when (order.orderStatus) {
+                                OrderStatus.RECEIVED.name -> 0
+                                OrderStatus.BAKING.name -> 1
+                                OrderStatus.READY.name -> 2
+                                OrderStatus.DELIVERED.name -> 3
+                                else -> 3
+                            }
+                            val stages = listOf(
+                                "1. Received" to StatusReceived,
+                                "2. Preparing/Baking" to StatusBaking,
+                                "3. Ready to Deliver" to StatusReady,
+                                "4. Delivered" to StatusDelivered
+                            )
 
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                stages.forEachIndexed { idx, (label, color) ->
+                                    val isDone = idx <= currentStep
+                                    val isCurrent = idx == currentStep
+
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(24.dp)
+                                                .clip(CircleShape)
+                                                .background(if (isDone) color else Color(0xFFE0E0E0)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (isDone) {
+                                                Icon(
+                                                    Icons.Default.Check,
+                                                    contentDescription = null,
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                            } else {
+                                                Text(
+                                                    text = "${idx + 1}",
+                                                    fontSize = 11.sp,
+                                                    color = TextSecondary,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(4.dp))
+
+                                        Text(
+                                            text = label,
+                                            fontSize = 9.sp,
+                                            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isCurrent) color else if (isDone) TextPrimary else TextMuted,
+                                            maxLines = 2
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+
+                        // Status Progression & Actions
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            steps.forEachIndexed { index, step ->
-                                val isDone = currentStatus.stepIndex >= step.stepIndex
-                                val isCurrent = currentStatus == step
-
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .clip(CircleShape)
-                                            .background(
-                                                when {
-                                                    isCurrent -> StatusBaking
-                                                    isDone -> PrimaryCocoa
-                                                    else -> WarmBorder
-                                                }
-                                            ),
-                                        contentAlignment = Alignment.Center
+                            when (order.orderStatus) {
+                                OrderStatus.RECEIVED.name -> {
+                                    Button(
+                                        onClick = { viewModel.updateOrderStatus(order.id, OrderStatus.BAKING) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = StatusBaking),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.weight(1f)
                                     ) {
-                                        if (isDone) {
-                                            Icon(
-                                                imageVector = Icons.Default.Check,
-                                                contentDescription = null,
-                                                tint = Color.White,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        } else {
-                                            Text(
-                                                text = "${index + 1}",
-                                                color = TextSecondary,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 12.sp
-                                            )
+                                        Icon(Icons.Default.Kitchen, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Start Baking", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = { showCancelConfirmDialog = true },
+                                        shape = RoundedCornerShape(10.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusCancelled),
+                                        border = BorderStroke(1.dp, StatusCancelled)
+                                    ) {
+                                        Text("Cancel", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                                OrderStatus.BAKING.name -> {
+                                    Button(
+                                        onClick = { viewModel.updateOrderStatus(order.id, OrderStatus.READY) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = StatusReady),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Mark Ready to Deliver", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = { showCancelConfirmDialog = true },
+                                        shape = RoundedCornerShape(10.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusCancelled),
+                                        border = BorderStroke(1.dp, StatusCancelled)
+                                    ) {
+                                        Text("Cancel", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                                OrderStatus.READY.name -> {
+                                    Button(
+                                        onClick = { viewModel.updateOrderStatus(order.id, OrderStatus.DELIVERED) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = StatusDelivered),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Icon(Icons.Default.DoneAll, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Mark Delivered", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = { showCancelConfirmDialog = true },
+                                        shape = RoundedCornerShape(10.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusCancelled),
+                                        border = BorderStroke(1.dp, StatusCancelled)
+                                    ) {
+                                        Text("Cancel", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                                OrderStatus.CANCELLED.name -> {
+                                    OutlinedButton(
+                                        onClick = { viewModel.updateOrderStatus(order.id, OrderStatus.RECEIVED) },
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Reopen Order (Reset to Received)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                                else -> {
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = StatusDelivered.copy(alpha = 0.1f),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = StatusDelivered, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text("Order Fulfilled & Completed", color = StatusDelivered, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                         }
                                     }
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = when (step) {
-                                            OrderStatus.RECEIVED -> "Received"
-                                            OrderStatus.BAKING -> "Baking"
-                                            OrderStatus.READY -> "Ready"
-                                            OrderStatus.DELIVERED -> "Delivered"
-                                            else -> step.name
-                                        },
-                                        fontSize = 10.sp,
-                                        fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isCurrent) PrimaryCocoa else TextSecondary
-                                    )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        // Quick Status Update Action Buttons
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            if (order.orderStatus != OrderStatus.BAKING.name && order.orderStatus != OrderStatus.READY.name && order.orderStatus != OrderStatus.DELIVERED.name) {
-                                Button(
-                                    onClick = { viewModel.updateOrderStatus(order.id, OrderStatus.BAKING) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = StatusBaking),
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("Mark Baking", fontSize = 12.sp)
+                        if (showCancelConfirmDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showCancelConfirmDialog = false },
+                                title = { Text("Cancel Order #OB-${order.id}?") },
+                                text = { Text("Are you sure you want to mark this order as Cancelled?") },
+                                confirmButton = {
+                                    TextButton(
+                                        onClick = {
+                                            viewModel.updateOrderStatus(order.id, OrderStatus.CANCELLED)
+                                            showCancelConfirmDialog = false
+                                        }
+                                    ) {
+                                        Text("Cancel Order", color = StatusCancelled, fontWeight = FontWeight.Bold)
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showCancelConfirmDialog = false }) {
+                                        Text("Keep Order", color = TextSecondary)
+                                    }
                                 }
-                            }
-
-                            if (order.orderStatus == OrderStatus.BAKING.name) {
-                                Button(
-                                    onClick = { viewModel.updateOrderStatus(order.id, OrderStatus.READY) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = StatusReady),
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("Mark Ready", fontSize = 12.sp)
-                                }
-                            }
-
-                            if (order.orderStatus == OrderStatus.READY.name) {
-                                Button(
-                                    onClick = { viewModel.updateOrderStatus(order.id, OrderStatus.DELIVERED) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = StatusDelivered),
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("Mark Delivered", fontSize = 12.sp)
-                                }
-                            }
+                            )
                         }
                     }
                 }
@@ -530,12 +623,29 @@ fun OrderDetailScreen(
                             Text(Formatters.formatCurrency(order.totalAmount), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = PrimaryCocoa)
                         }
 
+                        Spacer(modifier = Modifier.height(6.dp))
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("Advance Paid:", color = AdvancePaidColor)
                             Text(Formatters.formatCurrency(order.advancePaid), color = AdvancePaidColor, fontWeight = FontWeight.SemiBold)
+                        }
+
+                        val paymentModeEnum = remember(order.paymentMode) {
+                            com.ovenlybytes.app.model.PaymentMode.entries.find {
+                                it.name.equals(order.paymentMode, ignoreCase = true) ||
+                                it.displayName.equals(order.paymentMode, ignoreCase = true)
+                            }
+                        }
+                        val paymentModeDisplay = paymentModeEnum?.displayName ?: order.paymentMode.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Payment Mode:", color = TextSecondary)
+                            Text(paymentModeDisplay, color = TextSecondary, fontWeight = FontWeight.SemiBold)
                         }
 
                         Row(
@@ -558,6 +668,21 @@ fun OrderDetailScreen(
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text("Mark Balance as Paid (₹${order.balanceDue.toInt()})", fontWeight = FontWeight.Bold)
                             }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Button(
+                            onClick = { onNavigateToCreateOrder?.invoke() },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        ) {
+                            Icon(Icons.Default.AddShoppingCart, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Start a New Order", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         }
                     }
                 }
@@ -885,6 +1010,23 @@ fun EditOrderDialog(
                             Text("Balance Due", fontSize = 10.sp, color = TextSecondary)
                             Text(Formatters.formatCurrency(balanceDue), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = BalanceDueColor)
                         }
+                    }
+                }
+
+                // Payment Mode Selector in Edit Dialog
+                Text("Payment Mode", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    PaymentMode.entries.forEach { mode ->
+                        FilterChip(
+                            selected = paymentMode == mode,
+                            onClick = { paymentMode = mode },
+                            label = { Text(mode.displayName, fontSize = 11.sp, fontWeight = if (paymentMode == mode) FontWeight.Bold else FontWeight.Normal) }
+                        )
                     }
                 }
             }

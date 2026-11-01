@@ -191,7 +191,8 @@ fun OvenlyAppContent(app: OvenlyBytesApp) {
                     OrderDetailScreen(
                         orderId = orderId,
                         viewModel = ordersViewModel,
-                        onNavigateBack = { navController.popBackStack() }
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToCreateOrder = { navController.navigate(Screen.CreateOrder.route) }
                     )
                 }
 

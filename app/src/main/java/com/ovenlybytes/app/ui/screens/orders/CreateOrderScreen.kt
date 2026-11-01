@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -40,8 +42,10 @@ import com.ovenlybytes.app.data.local.entities.OrderEntity
 import com.ovenlybytes.app.data.local.entities.OrderItemEntity
 import com.ovenlybytes.app.data.local.entities.getAllVariants
 import com.ovenlybytes.app.model.*
+import com.ovenlybytes.app.ui.components.OrderChannelBadge
 import com.ovenlybytes.app.ui.components.OvenlyTopAppBar
 import com.ovenlybytes.app.ui.theme.*
+import com.ovenlybytes.app.util.AppConstants
 import com.ovenlybytes.app.util.Formatters
 import com.ovenlybytes.app.util.WhatsAppHelper
 import kotlinx.coroutines.launch
@@ -243,6 +247,31 @@ fun CreateOrderScreen(
         }
     }
 
+    // 7. Navigation Wizard Stepper (Steps 1 to 4)
+    var currentStep by remember { mutableIntStateOf(1) }
+
+    fun validateStep2AndNext() {
+        val finalCustName = if (isNewCustomer) customerName.trim() else selectedExistingCustomer?.name ?: ""
+        val finalCustPhone = if (isNewCustomer) customerPhone.trim() else selectedExistingCustomer?.phone ?: ""
+        if (finalCustName.isBlank() || finalCustPhone.isBlank()) {
+            Toast.makeText(context, "Please enter customer Name and Phone number", Toast.LENGTH_SHORT).show()
+            return
+        }
+        currentStep = 3
+    }
+
+    fun validateStep3AndNext() {
+        if (cartItems.isEmpty()) {
+            Toast.makeText(context, "Please add at least 1 menu item to the order", Toast.LENGTH_SHORT).show()
+            return
+        }
+        currentStep = 4
+    }
+
+    fun validateStep4AndNext() {
+        currentStep = 5
+    }
+
     fun submitOrder(openWhatsAppReceipt: Boolean) {
         if (cartItems.isEmpty()) return
         val finalCustName = if (isNewCustomer) customerName.trim() else selectedExistingCustomer?.name ?: ""
@@ -316,917 +345,1337 @@ fun CreateOrderScreen(
         ) {
             item { Spacer(modifier = Modifier.height(4.dp)) }
 
-            // STEP 1: ORDER SOURCE (WhatsApp / Phone / Walk-in)
+            // STEPPER PROGRESS BAR HEADER
             item {
                 Card(
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(
-                            text = "1. Order Received Channel",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = PrimaryCocoa
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val stepTitles = listOf("1. Channel", "2. Customer", "3. Items", "4. Schedule", "5. Review")
+                        stepTitles.forEachIndexed { index, title ->
+                            val stepNum = index + 1
+                            val isCurrent = currentStep == stepNum
+                            val isDone = currentStep > stepNum
+
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        if (stepNum < currentStep) currentStep = stepNum
+                                    }
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            when {
+                                                isCurrent -> PrimaryCocoa
+                                                isDone -> StatusReady
+                                                else -> WarmBorder
+                                            }
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isDone) {
+                                        Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                    } else {
+                                        Text(
+                                            "$stepNum",
+                                            color = if (isCurrent) Color.White else TextSecondary,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = title,
+                                    fontSize = 9.sp,
+                                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isCurrent) PrimaryCocoa else TextSecondary,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // STEP 1: ORDER SOURCE (WhatsApp / Phone / Walk-in)
+            if (currentStep == 1) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(
+                                text = "1. Order Received Channel",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = PrimaryCocoa
+                                )
                             )
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // WhatsApp Option
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (selectedChannel == OrderSource.WHATSAPP) WhatsAppBackground else Color.Transparent,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { selectedChannel = OrderSource.WHATSAPP }
-                                    .border(
-                                        width = if (selectedChannel == OrderSource.WHATSAPP) 2.dp else 1.dp,
-                                        color = if (selectedChannel == OrderSource.WHATSAPP) WhatsAppGreenDark else WarmBorder,
-                                        shape = RoundedCornerShape(12.dp)
-                                    )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
+                                // WhatsApp Option
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (selectedChannel == OrderSource.WHATSAPP) WhatsAppBackground else Color.Transparent,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable { selectedChannel = OrderSource.WHATSAPP }
+                                        .border(
+                                            width = if (selectedChannel == OrderSource.WHATSAPP) 2.dp else 1.dp,
+                                            color = if (selectedChannel == OrderSource.WHATSAPP) WhatsAppGreenDark else WarmBorder,
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Chat,
-                                        contentDescription = null,
-                                        tint = WhatsAppGreenDark,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = "WhatsApp",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp,
-                                        color = WhatsAppGreenDark
-                                    )
+                                    Row(
+                                        modifier = Modifier.padding(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Chat,
+                                            contentDescription = null,
+                                            tint = WhatsAppGreenDark,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "WhatsApp",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = WhatsAppGreenDark
+                                        )
+                                    }
                                 }
-                            }
 
-                            // Phone Call Option
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (selectedChannel == OrderSource.PHONE) PhoneBlueBackground else Color.Transparent,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { selectedChannel = OrderSource.PHONE }
-                                    .border(
-                                        width = if (selectedChannel == OrderSource.PHONE) 2.dp else 1.dp,
-                                        color = if (selectedChannel == OrderSource.PHONE) PhoneBlue else WarmBorder,
-                                        shape = RoundedCornerShape(12.dp)
-                                    )
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
+                                // Phone Call Option
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (selectedChannel == OrderSource.PHONE) PhoneBlueBackground else Color.Transparent,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable { selectedChannel = OrderSource.PHONE }
+                                        .border(
+                                            width = if (selectedChannel == OrderSource.PHONE) 2.dp else 1.dp,
+                                            color = if (selectedChannel == OrderSource.PHONE) PhoneBlue else WarmBorder,
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Call,
-                                        contentDescription = null,
-                                        tint = PhoneBlue,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = "Phone Call",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp,
-                                        color = PhoneBlue
-                                    )
+                                    Row(
+                                        modifier = Modifier.padding(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Call,
+                                            contentDescription = null,
+                                            tint = PhoneBlue,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Phone Call",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = PhoneBlue
+                                        )
+                                    }
                                 }
-                            }
 
-                            // Walk-in Option
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (selectedChannel == OrderSource.WALK_IN) WalkInPurpleBackground else Color.Transparent,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { selectedChannel = OrderSource.WALK_IN }
-                                    .border(
-                                        width = if (selectedChannel == OrderSource.WALK_IN) 2.dp else 1.dp,
-                                        color = if (selectedChannel == OrderSource.WALK_IN) WalkInPurple else WarmBorder,
-                                        shape = RoundedCornerShape(12.dp)
-                                    )
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
+                                // Walk-in Option
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = if (selectedChannel == OrderSource.WALK_IN) WalkInPurpleBackground else Color.Transparent,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable { selectedChannel = OrderSource.WALK_IN }
+                                        .border(
+                                            width = if (selectedChannel == OrderSource.WALK_IN) 2.dp else 1.dp,
+                                            color = if (selectedChannel == OrderSource.WALK_IN) WalkInPurple else WarmBorder,
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Storefront,
-                                        contentDescription = null,
-                                        tint = WalkInPurple,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = "Walk-in",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp,
-                                        color = WalkInPurple
-                                    )
+                                    Row(
+                                        modifier = Modifier.padding(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Storefront,
+                                            contentDescription = null,
+                                            tint = WalkInPurple,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Walk-in",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            color = WalkInPurple
+                                        )
+                                    }
                                 }
                             }
+                        }
+                    }
+                }
+
+                item {
+                    Button(
+                        onClick = { currentStep = 2 },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Next: Customer Details", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
             }
 
             // STEP 2: CUSTOMER DETAILS
-            item {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "2. Customer Details",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = PrimaryCocoa
-                                )
-                            )
-                            Row {
-                                FilterChip(
-                                    selected = isNewCustomer,
-                                    onClick = { isNewCustomer = true },
-                                    label = { Text("New", fontSize = 11.sp) },
-                                    modifier = Modifier.height(28.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                FilterChip(
-                                    selected = !isNewCustomer,
-                                    onClick = { isNewCustomer = false },
-                                    label = { Text("Saved", fontSize = 11.sp) },
-                                    modifier = Modifier.height(28.dp)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        if (isNewCustomer) {
+            if (currentStep == 2) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                TextButton(
-                                    onClick = { launchContactPicker() },
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Default.ContactPage,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        "Pick from Phonebook",
-                                        fontSize = 12.sp,
+                                Text(
+                                    text = "2. Customer Details",
+                                    style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = PrimaryCocoa
+                                    )
+                                )
+                                Row {
+                                    FilterChip(
+                                        selected = isNewCustomer,
+                                        onClick = { isNewCustomer = true },
+                                        label = { Text("New", fontSize = 11.sp) },
+                                        modifier = Modifier.height(28.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    FilterChip(
+                                        selected = !isNewCustomer,
+                                        onClick = { isNewCustomer = false },
+                                        label = { Text("Saved", fontSize = 11.sp) },
+                                        modifier = Modifier.height(28.dp)
                                     )
                                 }
                             }
 
-                            OutlinedTextField(
-                                value = customerName,
-                                onValueChange = { customerName = it },
-                                label = { Text("Customer Name *") },
-                                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                                trailingIcon = {
-                                    IconButton(onClick = { launchContactPicker() }) {
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            if (isNewCustomer) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    TextButton(
+                                        onClick = { launchContactPicker() },
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                    ) {
                                         Icon(
-                                            Icons.Default.Contacts,
-                                            contentDescription = "Pick Contact",
-                                            tint = MaterialTheme.colorScheme.primary
+                                            Icons.Default.ContactPage,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            "Pick from Phonebook",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
                                         )
                                     }
-                                },
+                                }
+
+                                OutlinedTextField(
+                                    value = customerName,
+                                    onValueChange = { customerName = it },
+                                    label = { Text("Customer Name *") },
+                                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                                    trailingIcon = {
+                                        IconButton(onClick = { launchContactPicker() }) {
+                                            Icon(
+                                                Icons.Default.Contacts,
+                                                contentDescription = "Pick Contact",
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OutlinedTextField(
+                                    value = customerPhone,
+                                    onValueChange = { customerPhone = it },
+                                    label = { Text("Phone Number * (for WhatsApp)") },
+                                    leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OutlinedTextField(
+                                    value = customerAddress,
+                                    onValueChange = { customerAddress = it },
+                                    label = { Text("Delivery Address / Landmark") },
+                                    leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    maxLines = 2
+                                )
+                            } else {
+                                // Smart Searchable Customer Directory
+                                if (existingCustomers.isEmpty()) {
+                                    Text("No saved customers yet. Create a new one above.", color = TextMuted)
+                                } else {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        // Search input for saved customers
+                                        OutlinedTextField(
+                                            value = customerSearchQuery,
+                                            onValueChange = {
+                                                customerSearchQuery = it
+                                                customerPage = 0 // Reset to first page on search
+                                            },
+                                            placeholder = { Text("Search client by name or phone...") },
+                                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                                            trailingIcon = {
+                                                if (customerSearchQuery.isNotBlank()) {
+                                                    IconButton(onClick = {
+                                                        customerSearchQuery = ""
+                                                        customerPage = 0
+                                                    }) {
+                                                        Icon(Icons.Default.Close, contentDescription = "Clear")
+                                                    }
+                                                }
+                                            },
+                                            singleLine = true,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+
+                                        // Filtering & Pagination calculations
+                                        val filteredSavedCustomers = remember(existingCustomers, customerSearchQuery) {
+                                            if (customerSearchQuery.isBlank()) existingCustomers
+                                            else existingCustomers.filter {
+                                                it.name.contains(customerSearchQuery, ignoreCase = true) ||
+                                                it.phone.contains(customerSearchQuery, ignoreCase = true)
+                                            }
+                                        }
+
+                                        val pageSize = 3
+                                        val totalPages = maxOf(1, (filteredSavedCustomers.size + pageSize - 1) / pageSize)
+                                        val currentPage = customerPage.coerceIn(0, totalPages - 1)
+
+                                        val startIndex = currentPage * pageSize
+                                        val endIndex = minOf(startIndex + pageSize, filteredSavedCustomers.size)
+
+                                        val paginatedCustomers = remember(filteredSavedCustomers, currentPage) {
+                                            if (startIndex < filteredSavedCustomers.size) {
+                                                filteredSavedCustomers.subList(startIndex, endIndex)
+                                            } else emptyList()
+                                        }
+
+                                        if (filteredSavedCustomers.isEmpty()) {
+                                            Text(
+                                                "No saved clients match '$customerSearchQuery'",
+                                                color = TextMuted,
+                                                fontSize = 12.sp,
+                                                modifier = Modifier.padding(vertical = 8.dp)
+                                            )
+                                        } else {
+                                            // Customer Cards List (3 items per page)
+                                            paginatedCustomers.forEach { cust ->
+                                                val isSelected = selectedExistingCustomer?.id == cust.id
+                                                Surface(
+                                                    shape = RoundedCornerShape(10.dp),
+                                                    color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else Color.Transparent,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .clickable { selectedExistingCustomer = cust }
+                                                        .border(
+                                                            width = if (isSelected) 1.5.dp else 0.8.dp,
+                                                            color = if (isSelected) MaterialTheme.colorScheme.primary else WarmBorder,
+                                                            shape = RoundedCornerShape(10.dp)
+                                                        )
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier.padding(10.dp),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.SpaceBetween
+                                                    ) {
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            modifier = Modifier.weight(1f)
+                                                        ) {
+                                                            RadioButton(
+                                                                selected = isSelected,
+                                                                onClick = { selectedExistingCustomer = cust }
+                                                            )
+                                                            Spacer(modifier = Modifier.width(6.dp))
+                                                            Column {
+                                                                Text(cust.name, fontWeight = FontWeight.Bold)
+                                                                Text(cust.phone, fontSize = 11.sp, color = TextSecondary)
+                                                            }
+                                                        }
+
+                                                        Row {
+                                                            IconButton(onClick = { customerToEdit = cust }, modifier = Modifier.size(28.dp)) {
+                                                                Icon(Icons.Default.Edit, contentDescription = "Edit Customer", tint = TextSecondary, modifier = Modifier.size(16.dp))
+                                                            }
+                                                            IconButton(onClick = { customerToDelete = cust }, modifier = Modifier.size(28.dp)) {
+                                                                Icon(Icons.Default.DeleteOutline, contentDescription = "Delete Customer", tint = BalanceDueColor, modifier = Modifier.size(16.dp))
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            // Pagination Navigation Bar
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(top = 4.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    "Showing ${startIndex + 1}–$endIndex of ${filteredSavedCustomers.size}",
+                                                    fontSize = 11.sp,
+                                                    color = TextSecondary
+                                                )
+
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                ) {
+                                                    OutlinedIconButton(
+                                                        onClick = { if (currentPage > 0) customerPage = currentPage - 1 },
+                                                        enabled = currentPage > 0,
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.ChevronLeft,
+                                                            contentDescription = "Previous Page",
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                    }
+
+                                                    Text(
+                                                        "${currentPage + 1}/$totalPages",
+                                                        fontSize = 12.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        modifier = Modifier.padding(horizontal = 4.dp)
+                                                    )
+
+                                                    OutlinedIconButton(
+                                                        onClick = { if (currentPage < totalPages - 1) customerPage = currentPage + 1 },
+                                                        enabled = currentPage < totalPages - 1,
+                                                        modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.ChevronRight,
+                                                            contentDescription = "Next Page",
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { currentStep = 1 },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(0.8f)
+                                .height(50.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Back", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                        }
+                        Button(
+                            onClick = { validateStep2AndNext() },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa),
+                            modifier = Modifier
+                                .weight(1.2f)
+                                .height(50.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Next: Add Items", fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    }
+                }
+            }
+
+            // STEP 3: ITEMS FROM OVENLY BITES MENU & CUSTOMIZATION
+            if (currentStep == 3) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "3. Menu Items Ordered",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = PrimaryCocoa
+                                    )
+                                )
+                                Button(
+                                    onClick = { showAddItemDialog = true },
+                                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Add Item", fontSize = 12.sp)
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            if (cartItems.isEmpty()) {
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = WarmCream,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showAddItemDialog = true }
+                                        .padding(vertical = 12.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Icon(Icons.Default.Cake, contentDescription = null, tint = TextMuted, modifier = Modifier.size(32.dp))
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text("No items added yet", fontWeight = FontWeight.SemiBold, color = TextSecondary)
+                                        Text("Tap '+ Add Item' to choose from Ovenly Bites menu", fontSize = 11.sp, color = TextMuted)
+                                    }
+                                }
+                            } else {
+                                cartItems.forEachIndexed { index, item ->
+                                    val iconConfig = remember(item.category, item.itemName) {
+                                        com.ovenlybytes.app.util.MenuItemIconHelper.getIconConfig(item.category, item.itemName)
+                                    }
+
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = MaterialTheme.colorScheme.background,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(10.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.weight(1f)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(36.dp)
+                                                        .clip(CircleShape)
+                                                        .background(iconConfig.backgroundColor),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = iconConfig.icon,
+                                                        contentDescription = item.itemName,
+                                                        tint = iconConfig.iconTint,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+
+                                                Spacer(modifier = Modifier.width(10.dp))
+
+                                                Column {
+                                                    Text(item.itemName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                                    Text(
+                                                        "${item.variantName} • ₹${item.unitPrice.toInt()} x ${item.quantity} = ₹${item.itemTotal.toInt()}",
+                                                        fontSize = 12.sp,
+                                                        color = TextSecondary
+                                                    )
+                                                }
+                                            }
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                IconButton(
+                                                    onClick = { editingCartItemIndex = index },
+                                                    modifier = Modifier.size(28.dp)
+                                                ) {
+                                                    Icon(Icons.Default.Edit, contentDescription = "Edit Item Details", tint = TextSecondary)
+                                                }
+                                                IconButton(
+                                                    onClick = {
+                                                        val updated = cartItems.toMutableList()
+                                                        if (item.quantity > 1) {
+                                                            updated[index] = item.copy(
+                                                                quantity = item.quantity - 1,
+                                                                itemTotal = item.unitPrice * (item.quantity - 1)
+                                                            )
+                                                        } else {
+                                                            updated.removeAt(index)
+                                                        }
+                                                        cartItems = updated
+                                                    },
+                                                    modifier = Modifier.size(28.dp)
+                                                ) {
+                                                    Icon(Icons.Default.RemoveCircleOutline, contentDescription = "Decrease", tint = TextSecondary)
+                                                }
+                                                Text("${item.quantity}", fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 6.dp))
+                                                IconButton(
+                                                    onClick = {
+                                                        val updated = cartItems.toMutableList()
+                                                        updated[index] = item.copy(
+                                                            quantity = item.quantity + 1,
+                                                            itemTotal = item.unitPrice * (item.quantity + 1)
+                                                        )
+                                                        cartItems = updated
+                                                    },
+                                                    modifier = Modifier.size(28.dp)
+                                                ) {
+                                                    Icon(Icons.Default.AddCircleOutline, contentDescription = "Increase", tint = PrimaryCocoa)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    Text(
+                                        "Items Subtotal: ₹${subtotal.toInt()}",
+                                        fontWeight = FontWeight.Bold,
+                                        color = PrimaryCocoa
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Cake Customization Notes
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.CardGiftcard, contentDescription = null, tint = SecondaryRose)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Cake Message & Design Notes",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = PrimaryCocoa
+                                    )
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            OutlinedTextField(
+                                value = cakeMessage,
+                                onValueChange = { cakeMessage = it },
+                                label = { Text("Message to pipe on Cake") },
+                                placeholder = { Text("e.g. Happy 25th Birthday Ananya ❤️") },
+                                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true
                             )
+
                             Spacer(modifier = Modifier.height(8.dp))
+
                             OutlinedTextField(
-                                value = customerPhone,
-                                onValueChange = { customerPhone = it },
-                                label = { Text("Phone Number * (for WhatsApp)") },
-                                leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            OutlinedTextField(
-                                value = customerAddress,
-                                onValueChange = { customerAddress = it },
-                                label = { Text("Delivery Address / Landmark") },
-                                leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
+                                value = customizationNotes,
+                                onValueChange = { customizationNotes = it },
+                                label = { Text("Design / Theme / Flavor notes") },
+                                placeholder = { Text("e.g. Gold flakes, chocolate drip, less sweet") },
                                 modifier = Modifier.fillMaxWidth(),
                                 maxLines = 2
                             )
-                        } else {
-                            // Searchable & Paginated Saved Customer Directory
-                            if (existingCustomers.isEmpty()) {
-                                Text("No saved customers yet. Create a new one above.", color = TextMuted)
-                            } else {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    // Search input for saved customers
-                                    OutlinedTextField(
-                                        value = customerSearchQuery,
-                                        onValueChange = {
-                                            customerSearchQuery = it
-                                            customerPage = 0 // Reset to first page on search
-                                        },
-                                        placeholder = { Text("Search client by name, phone or address...") },
-                                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                                        trailingIcon = {
-                                            if (customerSearchQuery.isNotBlank()) {
-                                                IconButton(onClick = {
-                                                    customerSearchQuery = ""
-                                                    customerPage = 0
-                                                }) {
-                                                    Icon(Icons.Default.Close, contentDescription = "Clear")
-                                                }
-                                            }
-                                        },
-                                        singleLine = true,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
 
-                                    // Filtering & Pagination calculations
-                                    val filteredSavedCustomers = remember(existingCustomers, customerSearchQuery) {
-                                        if (customerSearchQuery.isBlank()) existingCustomers
-                                        else existingCustomers.filter {
-                                            it.name.contains(customerSearchQuery, ignoreCase = true) ||
-                                            it.phone.contains(customerSearchQuery, ignoreCase = true) ||
-                                            it.address.contains(customerSearchQuery, ignoreCase = true)
-                                        }
-                                    }
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                                    val pageSize = 5
-                                    val totalPages = maxOf(1, (filteredSavedCustomers.size + pageSize - 1) / pageSize)
-                                    val currentPage = customerPage.coerceIn(0, totalPages - 1)
+                            OutlinedTextField(
+                                value = customizationChargeText,
+                                onValueChange = { customizationChargeText = it },
+                                label = { Text("Extra charge for customization (₹)") },
+                                placeholder = { Text("0") },
+                                supportingText = { Text("As per menu: Extra charge applies for custom cakes") },
+                                leadingIcon = { Icon(Icons.Default.CurrencyRupee, contentDescription = null) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true
+                            )
+                        }
+                    }
+                }
 
-                                    val startIndex = currentPage * pageSize
-                                    val endIndex = minOf(startIndex + pageSize, filteredSavedCustomers.size)
-
-                                    val paginatedCustomers = remember(filteredSavedCustomers, currentPage) {
-                                        if (startIndex < filteredSavedCustomers.size) {
-                                            filteredSavedCustomers.subList(startIndex, endIndex)
-                                        } else emptyList()
-                                    }
-
-                                    if (filteredSavedCustomers.isEmpty()) {
-                                        Text(
-                                            "No saved clients match '$customerSearchQuery'",
-                                            color = TextMuted,
-                                            fontSize = 12.sp,
-                                            modifier = Modifier.padding(vertical = 8.dp)
-                                        )
-                                    } else {
-                                        // Customer Cards List (5 items per page)
-                                        paginatedCustomers.forEach { cust ->
-                                            val isSelected = selectedExistingCustomer?.id == cust.id
-                                            Surface(
-                                                shape = RoundedCornerShape(10.dp),
-                                                color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else Color.Transparent,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clickable { selectedExistingCustomer = cust }
-                                                    .border(
-                                                        width = if (isSelected) 1.5.dp else 0.8.dp,
-                                                        color = if (isSelected) MaterialTheme.colorScheme.primary else WarmBorder,
-                                                        shape = RoundedCornerShape(10.dp)
-                                                    )
-                                            ) {
-                                                Row(
-                                                    modifier = Modifier.padding(10.dp),
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.SpaceBetween
-                                                ) {
-                                                    Row(
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                        modifier = Modifier.weight(1f)
-                                                    ) {
-                                                        RadioButton(
-                                                            selected = isSelected,
-                                                            onClick = { selectedExistingCustomer = cust }
-                                                        )
-                                                        Spacer(modifier = Modifier.width(6.dp))
-                                                        Column {
-                                                            Text(cust.name, fontWeight = FontWeight.Bold)
-                                                            Text("${cust.phone} • ${cust.address.take(30)}", fontSize = 11.sp, color = TextSecondary)
-                                                        }
-                                                    }
-
-                                                    Row {
-                                                        IconButton(onClick = { customerToEdit = cust }, modifier = Modifier.size(28.dp)) {
-                                                            Icon(Icons.Default.Edit, contentDescription = "Edit Customer", tint = TextSecondary, modifier = Modifier.size(16.dp))
-                                                        }
-                                                        IconButton(onClick = { customerToDelete = cust }, modifier = Modifier.size(28.dp)) {
-                                                            Icon(Icons.Default.DeleteOutline, contentDescription = "Delete Customer", tint = BalanceDueColor, modifier = Modifier.size(16.dp))
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        // Pagination Navigation Bar
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(top = 4.dp),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                "Showing ${startIndex + 1}–$endIndex of ${filteredSavedCustomers.size}",
-                                                fontSize = 11.sp,
-                                                color = TextSecondary
-                                            )
-
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                            ) {
-                                                OutlinedIconButton(
-                                                    onClick = { if (currentPage > 0) customerPage = currentPage - 1 },
-                                                    enabled = currentPage > 0,
-                                                    modifier = Modifier.size(32.dp)
-                                                ) {
-                                                    Icon(
-                                                        Icons.Default.ChevronLeft,
-                                                        contentDescription = "Previous Page",
-                                                        modifier = Modifier.size(18.dp)
-                                                    )
-                                                }
-
-                                                Text(
-                                                    "${currentPage + 1}/$totalPages",
-                                                    fontSize = 12.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    modifier = Modifier.padding(horizontal = 4.dp)
-                                                )
-
-                                                OutlinedIconButton(
-                                                    onClick = { if (currentPage < totalPages - 1) customerPage = currentPage + 1 },
-                                                    enabled = currentPage < totalPages - 1,
-                                                    modifier = Modifier.size(32.dp)
-                                                ) {
-                                                    Icon(
-                                                        Icons.Default.ChevronRight,
-                                                        contentDescription = "Next Page",
-                                                        modifier = Modifier.size(18.dp)
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { currentStep = 2 },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(0.8f)
+                                .height(50.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Back", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                        }
+                        Button(
+                            onClick = { validateStep3AndNext() },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa),
+                            modifier = Modifier
+                                .weight(1.2f)
+                                .height(50.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Next: Schedule & Pay", fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
                             }
                         }
                     }
                 }
             }
 
-            // STEP 3: ITEMS FROM OVENLY BITES MENU
-            item {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "3. Menu Items Ordered",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = PrimaryCocoa
+            // STEP 4: DELIVERY SCHEDULE & BILLING SUMMARY
+            if (currentStep == 4) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = PrimaryCocoa)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "4. Delivery Schedule",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = PrimaryCocoa
+                                    )
                                 )
-                            )
-                            Button(
-                                onClick = { showAddItemDialog = true },
-                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Add Item", fontSize = 12.sp)
                             }
-                        }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
 
-                        if (cartItems.isEmpty()) {
+                            // Same-Day Delivery Option Switch
                             Surface(
-                                shape = RoundedCornerShape(10.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (allowSameDayDelivery) Color(0xFFFFF3E0) else Color(0xFFFAFAFA),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(
+                                        width = 1.dp,
+                                        color = if (allowSameDayDelivery) StatusReceived else WarmBorder,
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "⚡ Allow Same-Day Express Delivery",
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (allowSameDayDelivery) StatusReceived else TextPrimary
+                                            )
+                                        )
+                                        Text(
+                                            text = if (allowSameDayDelivery) "Express option active (today's delivery enabled)" else "Standard policy: At least 1-day advance notice required",
+                                            style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary, fontSize = 11.sp)
+                                        )
+                                    }
+                                    Switch(
+                                        checked = allowSameDayDelivery,
+                                        onCheckedChange = { checked ->
+                                            allowSameDayDelivery = checked
+                                            if (checked) {
+                                                val todayCal = Calendar.getInstance()
+                                                todayCal.set(Calendar.HOUR_OF_DAY, 12)
+                                                todayCal.set(Calendar.MINUTE, 0)
+                                                deliveryTimestamp = todayCal.timeInMillis
+                                            } else {
+                                                val tomorrowCal = Calendar.getInstance()
+                                                tomorrowCal.add(Calendar.DAY_OF_YEAR, 1)
+                                                tomorrowCal.set(Calendar.HOUR_OF_DAY, 12)
+                                                tomorrowCal.set(Calendar.MINUTE, 0)
+                                                deliveryTimestamp = tomorrowCal.timeInMillis
+                                            }
+                                        },
+                                        colors = SwitchDefaults.colors(
+                                            checkedThumbColor = Color.White,
+                                            checkedTrackColor = StatusReceived
+                                        )
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            // Date Button
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
                                 color = WarmCream,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { showAddItemDialog = true }
-                                    .padding(vertical = 12.dp)
+                                    .clickable { datePickerDialog.show() }
+                                    .border(1.dp, WarmBorder, RoundedCornerShape(12.dp))
                             ) {
-                                Column(
-                                    modifier = Modifier.padding(16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                Row(
+                                    modifier = Modifier.padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Icon(Icons.Default.Cake, contentDescription = null, tint = TextMuted, modifier = Modifier.size(32.dp))
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Text("No items added yet", fontWeight = FontWeight.SemiBold, color = TextSecondary)
-                                    Text("Tap '+ Add Item' to choose from Ovenly Bites menu", fontSize = 11.sp, color = TextMuted)
-                                }
-                            }
-                        } else {
-                            cartItems.forEachIndexed { index, item ->
-                                val iconConfig = remember(item.category, item.itemName) {
-                                    com.ovenlybytes.app.util.MenuItemIconHelper.getIconConfig(item.category, item.itemName)
-                                }
-
-                                Surface(
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = MaterialTheme.colorScheme.background,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(10.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Event, contentDescription = null, tint = PrimaryCocoa)
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column {
+                                            Text("Delivery Date", fontSize = 11.sp, color = TextSecondary)
+                                            Text(
+                                                Formatters.formatDate(deliveryTimestamp),
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 15.sp
+                                            )
+                                        }
+                                    }
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = if (isSameDayOrder) Color(0xFFFFF3E0) else EgglessGreenLight
                                     ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(36.dp)
-                                                    .clip(CircleShape)
-                                                    .background(iconConfig.backgroundColor),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Icon(
-                                                    imageVector = iconConfig.icon,
-                                                    contentDescription = item.itemName,
-                                                    tint = iconConfig.iconTint,
-                                                    modifier = Modifier.size(18.dp)
-                                                )
-                                            }
-
-                                            Spacer(modifier = Modifier.width(10.dp))
-
-                                            Column {
-                                                Text(item.itemName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                                Text(
-                                                    "${item.variantName} • ₹${item.unitPrice.toInt()} x ${item.quantity} = ₹${item.itemTotal.toInt()}",
-                                                    fontSize = 12.sp,
-                                                    color = TextSecondary
-                                                )
-                                            }
-                                        }
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            IconButton(
-                                                onClick = { editingCartItemIndex = index },
-                                                modifier = Modifier.size(28.dp)
-                                            ) {
-                                                Icon(Icons.Default.Edit, contentDescription = "Edit Item Details", tint = TextSecondary)
-                                            }
-                                            IconButton(
-                                                onClick = {
-                                                    val updated = cartItems.toMutableList()
-                                                    if (item.quantity > 1) {
-                                                        updated[index] = item.copy(
-                                                            quantity = item.quantity - 1,
-                                                            itemTotal = item.unitPrice * (item.quantity - 1)
-                                                        )
-                                                    } else {
-                                                        updated.removeAt(index)
-                                                    }
-                                                    cartItems = updated
-                                                },
-                                                modifier = Modifier.size(28.dp)
-                                            ) {
-                                                Icon(Icons.Default.RemoveCircleOutline, contentDescription = "Decrease", tint = TextSecondary)
-                                            }
-                                            Text("${item.quantity}", fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 6.dp))
-                                            IconButton(
-                                                onClick = {
-                                                    val updated = cartItems.toMutableList()
-                                                    updated[index] = item.copy(
-                                                        quantity = item.quantity + 1,
-                                                        itemTotal = item.unitPrice * (item.quantity + 1)
-                                                    )
-                                                    cartItems = updated
-                                                },
-                                                modifier = Modifier.size(28.dp)
-                                            ) {
-                                                Icon(Icons.Default.AddCircleOutline, contentDescription = "Increase", tint = PrimaryCocoa)
-                                            }
-                                        }
+                                        Text(
+                                            text = Formatters.getDeliveryBadgeText(deliveryTimestamp),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isSameDayOrder) StatusReceived else EgglessGreen,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                        )
                                     }
                                 }
                             }
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
-                            ) {
-                                Text(
-                                    "Items Subtotal: ₹${subtotal.toInt()}",
-                                    fontWeight = FontWeight.Bold,
-                                    color = PrimaryCocoa
-                                )
-                            }
-                        }
-                    }
-                }
-            }
 
-            // STEP 4: CAKE CUSTOMIZATION & MESSAGE
-            item {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.CardGiftcard, contentDescription = null, tint = SecondaryRose)
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "4. Cake Customization & Notes",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = PrimaryCocoa
-                                )
-                            )
-                        }
+                            Spacer(modifier = Modifier.height(10.dp))
 
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        OutlinedTextField(
-                            value = cakeMessage,
-                            onValueChange = { cakeMessage = it },
-                            label = { Text("Message to pipe on Cake") },
-                            placeholder = { Text("e.g. Happy 25th Birthday Ananya ❤️") },
-                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        OutlinedTextField(
-                            value = customizationNotes,
-                            onValueChange = { customizationNotes = it },
-                            label = { Text("Design / Theme / Flavor notes") },
-                            placeholder = { Text("e.g. Gold flakes, chocolate drip, less sweet") },
-                            modifier = Modifier.fillMaxWidth(),
-                            maxLines = 2
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        OutlinedTextField(
-                            value = customizationChargeText,
-                            onValueChange = { customizationChargeText = it },
-                            label = { Text("Extra charge for customization (₹)") },
-                            placeholder = { Text("0") },
-                            supportingText = { Text("As per menu: Extra charge applies for custom cakes") },
-                            leadingIcon = { Icon(Icons.Default.CurrencyRupee, contentDescription = null) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-                    }
-                }
-            }
-
-            // STEP 5: DELIVERY SCHEDULE & 2-DAY POLICY CHECK
-            item {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = PrimaryCocoa)
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "5. Delivery Schedule",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = PrimaryCocoa
-                                )
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // Same-Day Delivery Option Switch
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (allowSameDayDelivery) Color(0xFFFFF3E0) else Color(0xFFFAFAFA),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(
-                                    width = 1.dp,
-                                    color = if (allowSameDayDelivery) StatusReceived else WarmBorder,
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                        ) {
+                            // Time Slot Selector
+                            Text("Delivery Time Slot", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
+                            Spacer(modifier = Modifier.height(4.dp))
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "⚡ Allow Same-Day Express Delivery",
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = if (allowSameDayDelivery) StatusReceived else TextPrimary
-                                        )
-                                    )
-                                    Text(
-                                        text = if (allowSameDayDelivery) "Express option active (today's delivery enabled)" else "Standard policy: At least 1-day advance notice required",
-                                        style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary, fontSize = 11.sp)
+                                AppConstants.DEFAULT_TIME_SLOTS.forEach { slot ->
+                                    FilterChip(
+                                        selected = deliveryTimeSlot == slot,
+                                        onClick = { deliveryTimeSlot = slot },
+                                        label = { Text(slot, fontSize = 11.sp) }
                                     )
                                 }
-                                Switch(
-                                    checked = allowSameDayDelivery,
-                                    onCheckedChange = { checked ->
-                                        allowSameDayDelivery = checked
-                                        if (checked) {
-                                            val todayCal = Calendar.getInstance()
-                                            todayCal.set(Calendar.HOUR_OF_DAY, 12)
-                                            todayCal.set(Calendar.MINUTE, 0)
-                                            deliveryTimestamp = todayCal.timeInMillis
-                                        } else {
-                                            val tomorrowCal = Calendar.getInstance()
-                                            tomorrowCal.add(Calendar.DAY_OF_YEAR, 1)
-                                            tomorrowCal.set(Calendar.HOUR_OF_DAY, 12)
-                                            tomorrowCal.set(Calendar.MINUTE, 0)
-                                            deliveryTimestamp = tomorrowCal.timeInMillis
-                                        }
-                                    },
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = Color.White,
-                                        checkedTrackColor = StatusReceived
-                                    )
-                                )
                             }
                         }
+                    }
+                }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                // Payment & Summary
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(
+                                text = "Payment & Billing Summary",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = PrimaryCocoa
+                                )
+                            )
 
-                        // Date Button
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = WarmCream,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { datePickerDialog.show() }
-                                .border(1.dp, WarmBorder, RoundedCornerShape(12.dp))
-                        ) {
+                            Spacer(modifier = Modifier.height(10.dp))
+
                             Row(
-                                modifier = Modifier.padding(14.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.Event, contentDescription = null, tint = PrimaryCocoa)
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Column {
-                                        Text("Delivery Date", fontSize = 11.sp, color = TextSecondary)
-                                        Text(
-                                            Formatters.formatDate(deliveryTimestamp),
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 15.sp
-                                        )
+                                OutlinedTextField(
+                                    value = advancePaidText,
+                                    onValueChange = { advancePaidText = it },
+                                    label = { Text("Advance Paid (₹)") },
+                                    placeholder = { Text("0") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    modifier = Modifier.weight(1f),
+                                    singleLine = true
+                                )
+                                OutlinedTextField(
+                                    value = discountText,
+                                    onValueChange = { discountText = it },
+                                    label = { Text("Discount (₹)") },
+                                    placeholder = { Text("0") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    modifier = Modifier.weight(1f),
+                                    singleLine = true
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Payment Mode Selector
+                            Text("Payment Mode", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                PaymentMode.entries.forEach { mode ->
+                                    FilterChip(
+                                        selected = paymentMode == mode,
+                                        onClick = { paymentMode = mode },
+                                        label = { Text(mode.displayName, fontSize = 11.sp, fontWeight = if (paymentMode == mode) FontWeight.Bold else FontWeight.Normal) }
+                                    )
+                                }
+                            }
+
+                            Divider(modifier = Modifier.padding(vertical = 12.dp), color = WarmBorder)
+
+                            // Totals Summary Box
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = WarmCream,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("Items Subtotal:", color = TextSecondary)
+                                        Text(Formatters.formatCurrency(subtotal), fontWeight = FontWeight.SemiBold)
+                                    }
+                                    if (customizationCharge > 0) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text("Customization Extra:", color = TextSecondary)
+                                            Text("+${Formatters.formatCurrency(customizationCharge)}", fontWeight = FontWeight.SemiBold)
+                                        }
+                                    }
+                                    if (discount > 0) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text("Discount:", color = TextSecondary)
+                                            Text("-${Formatters.formatCurrency(discount)}", color = EgglessGreen, fontWeight = FontWeight.SemiBold)
+                                        }
+                                    }
+                                    Divider(modifier = Modifier.padding(vertical = 6.dp), color = WarmBorder)
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("Total Amount:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                        Text(Formatters.formatCurrency(totalAmount), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = PrimaryCocoa)
+                                    }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("Advance Paid:", color = AdvancePaidColor)
+                                        Text(Formatters.formatCurrency(advancePaid), color = AdvancePaidColor, fontWeight = FontWeight.SemiBold)
+                                    }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("Balance Due on Delivery:", fontWeight = FontWeight.Bold, color = BalanceDueColor)
+                                        Text(Formatters.formatCurrency(balanceDue), fontWeight = FontWeight.Bold, color = BalanceDueColor)
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+
+                // STEP 4 ACTIONS: NEXT TO REVIEW
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { currentStep = 3 },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(0.8f)
+                                .height(52.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Back", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                        }
+                        Button(
+                            onClick = { validateStep4AndNext() },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa),
+                            modifier = Modifier
+                                .weight(1.2f)
+                                .height(52.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Next: Review Order", fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    }
+                }
+            }
+
+            // STEP 5: REVIEW & CONFIRM ORDER SUMMARY WIZARD STEP
+            if (currentStep == 5) {
+                // 1. Order Channel & Customer Details Review Card
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "1. Customer & Channel Review",
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa)
+                                )
+                                OrderChannelBadge(sourceName = selectedChannel.name)
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            val finalCustName = if (isNewCustomer) customerName.trim() else selectedExistingCustomer?.name ?: "Customer"
+                            val finalCustPhone = if (isNewCustomer) customerPhone.trim() else selectedExistingCustomer?.phone ?: "N/A"
+                            val finalCustAddress = if (isNewCustomer) customerAddress.trim() else selectedExistingCustomer?.address ?: ""
+
+                            Text(finalCustName, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            Text("Phone: $finalCustPhone", color = TextSecondary, fontSize = 13.sp)
+                            if (finalCustAddress.isNotBlank()) {
+                                Text("Delivery Address: $finalCustAddress", color = TextSecondary, fontSize = 13.sp)
+                            }
+                        }
+                    }
+                }
+
+                // 2. Delivery Date & Time Slot Card
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(
+                                text = "2. Delivery Schedule",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Delivery Date:", color = TextSecondary)
+                                Text(
+                                    Formatters.formatDate(deliveryTimestamp),
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Time Slot:", color = TextSecondary)
+                                Text(deliveryTimeSlot, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+                    }
+                }
+
+                // 3. Ordered Items & Customization Card
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(
+                                text = "3. Ordered Items (${cartItems.size})",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            cartItems.forEach { item ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(item.itemName, fontWeight = FontWeight.Bold)
+                                        Text("${item.variantName} • Qty: ${item.quantity}", color = TextSecondary, fontSize = 12.sp)
+                                    }
+                                    Text("₹${item.itemTotal.toInt()}", fontWeight = FontWeight.Bold, color = PrimaryCocoa)
+                                }
+                            }
+
+                            if (cakeMessage.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Surface(
                                     shape = RoundedCornerShape(8.dp),
-                                    color = if (isSameDayOrder) Color(0xFFFFF3E0) else EgglessGreenLight
+                                    color = PrimaryCocoa.copy(alpha = 0.05f),
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        text = Formatters.getDeliveryBadgeText(deliveryTimestamp),
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isSameDayOrder) StatusReceived else EgglessGreen,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                        text = "Cake Message: \"$cakeMessage\"",
+                                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold, color = PrimaryCocoa),
+                                        modifier = Modifier.padding(8.dp)
                                     )
                                 }
                             }
-                        }
 
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // Time Slot Selector
-                        Text("Delivery Time Slot", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            listOf(
-                                "10:00 AM - 12:00 PM",
-                                "1:00 PM - 3:00 PM",
-                                "5:00 PM - 7:00 PM",
-                                "7:00 PM - 9:00 PM",
-                                "Anytime"
-                            ).forEach { slot ->
-                                FilterChip(
-                                    selected = deliveryTimeSlot == slot,
-                                    onClick = { deliveryTimeSlot = slot },
-                                    label = { Text(slot, fontSize = 11.sp) }
+                            if (customizationNotes.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Design Notes: $customizationNotes",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
                                 )
                             }
                         }
                     }
                 }
-            }
 
-            // STEP 6: BILLING & ADVANCE PAYMENT
-            item {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(
-                            text = "6. Payment & Summary",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = PrimaryCocoa
+                // 4. Financial & Payment Summary Card
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(
+                                text = "4. Final Billing & Payment",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa)
                             )
-                        )
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            OutlinedTextField(
-                                value = advancePaidText,
-                                onValueChange = { advancePaidText = it },
-                                label = { Text("Advance Paid (₹)") },
-                                placeholder = { Text("0") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f),
-                                singleLine = true
-                            )
-                            OutlinedTextField(
-                                value = discountText,
-                                onValueChange = { discountText = it },
-                                label = { Text("Discount (₹)") },
-                                placeholder = { Text("0") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f),
-                                singleLine = true
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Payment Mode Selector
-                        Text("Payment Mode", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            PaymentMode.values().forEach { mode ->
-                                FilterChip(
-                                    selected = paymentMode == mode,
-                                    onClick = { paymentMode = mode },
-                                    label = { Text(mode.name, fontSize = 11.sp) },
-                                    modifier = Modifier.weight(1f)
-                                )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Items Subtotal:", color = TextSecondary)
+                                Text(Formatters.formatCurrency(subtotal))
                             }
-                        }
 
-                        Divider(modifier = Modifier.padding(vertical = 12.dp), color = WarmBorder)
+                            if (customizationCharge > 0) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Customization Charge:", color = TextSecondary)
+                                    Text("+${Formatters.formatCurrency(customizationCharge)}")
+                                }
+                            }
 
-                        // Totals Summary Box
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = WarmCream,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
+                            if (discount > 0) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Items Subtotal:", color = TextSecondary)
-                                    Text(Formatters.formatCurrency(subtotal), fontWeight = FontWeight.SemiBold)
+                                    Text("Discount:", color = TextSecondary)
+                                    Text("-${Formatters.formatCurrency(discount)}", color = EgglessGreen)
                                 }
-                                if (customizationCharge > 0) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text("Customization Extra:", color = TextSecondary)
-                                        Text("+${Formatters.formatCurrency(customizationCharge)}", fontWeight = FontWeight.SemiBold)
-                                    }
-                                }
-                                if (discount > 0) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text("Discount:", color = TextSecondary)
-                                        Text("-${Formatters.formatCurrency(discount)}", color = EgglessGreen, fontWeight = FontWeight.SemiBold)
-                                    }
-                                }
-                                Divider(modifier = Modifier.padding(vertical = 6.dp), color = WarmBorder)
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Total Amount:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                    Text(Formatters.formatCurrency(totalAmount), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = PrimaryCocoa)
-                                }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Advance Paid:", color = AdvancePaidColor)
-                                    Text(Formatters.formatCurrency(advancePaid), color = AdvancePaidColor, fontWeight = FontWeight.SemiBold)
-                                }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Balance Due on Delivery:", fontWeight = FontWeight.Bold, color = BalanceDueColor)
-                                    Text(Formatters.formatCurrency(balanceDue), fontWeight = FontWeight.Bold, color = BalanceDueColor)
-                                }
+                            }
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp), color = WarmBorder)
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Total Amount:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Text(Formatters.formatCurrency(totalAmount), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = PrimaryCocoa)
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Advance Paid (${paymentMode.displayName}):", color = AdvancePaidColor)
+                                Text(Formatters.formatCurrency(advancePaid), color = AdvancePaidColor, fontWeight = FontWeight.SemiBold)
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Balance Due on Delivery:", fontWeight = FontWeight.Bold, color = BalanceDueColor)
+                                Text(Formatters.formatCurrency(balanceDue), fontWeight = FontWeight.Bold, color = BalanceDueColor)
                             }
                         }
                     }
                 }
-            }
 
-            // ACTION BUTTONS: SAVE & WHATSAPP
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                // STEP 5 FINAL CONFIRMATION ACTIONS
+                item {
                     Button(
                         onClick = { submitOrder(openWhatsAppReceipt = true) },
                         enabled = cartItems.isNotEmpty(),
                         colors = ButtonDefaults.buttonColors(containerColor = WhatsAppGreenDark),
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
                     ) {
-                        Icon(Icons.Default.Chat, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Save & Send WhatsApp Receipt", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Confirm & Send WhatsApp Receipt", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
                     }
 
-                    OutlinedButton(
-                        onClick = { submitOrder(openWhatsAppReceipt = false) },
-                        enabled = cartItems.isNotEmpty(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryCocoa),
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text("Save Order Only", fontWeight = FontWeight.Bold)
+                        OutlinedButton(
+                            onClick = { currentStep = 4 },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(0.8f)
+                                .height(48.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Back", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                        }
+
+                        OutlinedButton(
+                            onClick = { submitOrder(openWhatsAppReceipt = false) },
+                            enabled = cartItems.isNotEmpty(),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryCocoa),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(1.2f)
+                                .height(48.dp)
+                        ) {
+                            Text("Save Order Only", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
                     }
                 }
             }

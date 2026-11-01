@@ -350,13 +350,16 @@ fun ActiveOrderCard(
                 color = WarmBorder
             )
 
-            // Delivery Date & Actions
+            // Delivery Date & Quick Contact Shortcuts
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = "Booking Date: ",
@@ -383,12 +386,15 @@ fun ActiveOrderCard(
                     )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     // WhatsApp Quick Share
                     IconButton(
                         onClick = onWhatsAppClick,
                         modifier = Modifier
-                            .size(34.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(WhatsAppBackground)
                     ) {
@@ -400,39 +406,95 @@ fun ActiveOrderCard(
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    // Cancel Order Option
+                    var showCancelConfirmDialog by remember { mutableStateOf(false) }
 
-                    // Progress Status Button
-                    when (order.orderStatus) {
-                        OrderStatus.RECEIVED.name -> {
-                            Button(
-                                onClick = { onStatusChange(OrderStatus.BAKING) },
-                                colors = ButtonDefaults.buttonColors(containerColor = StatusBaking),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Text("Bake", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    IconButton(
+                        onClick = { showCancelConfirmDialog = true },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(StatusCancelled.copy(alpha = 0.1f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Cancel,
+                            contentDescription = "Cancel Order",
+                            tint = StatusCancelled,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    if (showCancelConfirmDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showCancelConfirmDialog = false },
+                            title = { Text("Cancel Order #OB-${order.id}?") },
+                            text = { Text("Are you sure you want to mark this order as Cancelled?") },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        onStatusChange(OrderStatus.CANCELLED)
+                                        showCancelConfirmDialog = false
+                                    }
+                                ) {
+                                    Text("Cancel Order", color = StatusCancelled, fontWeight = FontWeight.Bold)
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showCancelConfirmDialog = false }) {
+                                    Text("Keep Order", color = TextSecondary)
+                                }
                             }
+                        )
+                    }
+                }
+            }
+
+            // DEDICATED STAGE PROGRESSION BUTTON (NEW LINE)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            when (order.orderStatus) {
+                OrderStatus.RECEIVED.name -> {
+                    Button(
+                        onClick = { onStatusChange(OrderStatus.BAKING) },
+                        colors = ButtonDefaults.buttonColors(containerColor = StatusBaking),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(vertical = 10.dp, horizontal = 12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Kitchen, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Stage 2: Start Baking", fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                         }
-                        OrderStatus.BAKING.name -> {
-                            Button(
-                                onClick = { onStatusChange(OrderStatus.READY) },
-                                colors = ButtonDefaults.buttonColors(containerColor = StatusReady),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Text("Ready", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            }
+                    }
+                }
+                OrderStatus.BAKING.name -> {
+                    Button(
+                        onClick = { onStatusChange(OrderStatus.READY) },
+                        colors = ButtonDefaults.buttonColors(containerColor = StatusReady),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(vertical = 10.dp, horizontal = 12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Stage 3: Ready to Deliver", fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                         }
-                        OrderStatus.READY.name -> {
-                            Button(
-                                onClick = { onStatusChange(OrderStatus.DELIVERED) },
-                                colors = ButtonDefaults.buttonColors(containerColor = StatusDelivered),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Text("Deliver", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            }
+                    }
+                }
+                OrderStatus.READY.name -> {
+                    Button(
+                        onClick = { onStatusChange(OrderStatus.DELIVERED) },
+                        colors = ButtonDefaults.buttonColors(containerColor = StatusDelivered),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(vertical = 10.dp, horizontal = 12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.DoneAll, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Stage 4: Mark Delivered", fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                         }
                     }
                 }

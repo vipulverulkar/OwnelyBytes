@@ -170,9 +170,8 @@ fun OrderStatusChip(
 ) {
     val (bgColor, textColor, label) = when (statusName) {
         OrderStatus.RECEIVED.name -> Triple(Color(0xFFFFF3E0), StatusReceived, "Received")
-        OrderStatus.BAKING.name -> Triple(Color(0xFFFBE9E7), StatusBaking, "Baking & Preparing")
-        OrderStatus.READY.name -> Triple(Color(0xFFE8F5E9), StatusReady, "Ready for Pickup")
-        OrderStatus.OUT_FOR_DELIVERY.name -> Triple(Color(0xFFE1F5FE), Color(0xFF0288D1), "Out for Delivery")
+        OrderStatus.BAKING.name -> Triple(Color(0xFFFBE9E7), StatusBaking, "Preparing / Baking")
+        OrderStatus.READY.name -> Triple(Color(0xFFE0F2F1), StatusReady, "Ready to Deliver")
         OrderStatus.DELIVERED.name -> Triple(Color(0xFFE8F8EE), StatusDelivered, "Delivered")
         OrderStatus.CANCELLED.name -> Triple(Color(0xFFFFEBEE), StatusCancelled, "Cancelled")
         else -> Triple(Color(0xFFEEEEEE), Color(0xFF616161), statusName)

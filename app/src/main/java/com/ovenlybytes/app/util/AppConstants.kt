@@ -35,9 +35,9 @@ object AppConstants {
     // Default Time Slots
     val DEFAULT_TIME_SLOTS = listOf(
         "10:00 AM - 12:00 PM",
-        "12:00 PM - 02:00 PM",
-        "02:00 PM - 04:00 PM",
-        "04:00 PM - 06:00 PM",
-        "06:00 PM - 08:00 PM"
+        "1:00 PM - 3:00 PM",
+        "5:00 PM - 7:00 PM",
+        "7:00 PM - 9:00 PM",
+        "Anytime"
     )
 }
