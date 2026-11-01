@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -40,6 +42,7 @@ import com.ovenlybytes.app.data.local.entities.OrderEntity
 import com.ovenlybytes.app.data.local.entities.OrderItemEntity
 import com.ovenlybytes.app.data.local.entities.getAllVariants
 import com.ovenlybytes.app.model.*
+import com.ovenlybytes.app.ui.components.OrderChannelBadge
 import com.ovenlybytes.app.ui.components.OvenlyTopAppBar
 import com.ovenlybytes.app.ui.theme.*
 import com.ovenlybytes.app.util.AppConstants
@@ -265,6 +268,10 @@ fun CreateOrderScreen(
         currentStep = 4
     }
 
+    fun validateStep4AndNext() {
+        currentStep = 5
+    }
+
     fun submitOrder(openWhatsAppReceipt: Boolean) {
         if (cartItems.isEmpty()) return
         val finalCustName = if (isNewCustomer) customerName.trim() else selectedExistingCustomer?.name ?: ""
@@ -353,7 +360,7 @@ fun CreateOrderScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val stepTitles = listOf("1. Channel", "2. Customer", "3. Items & Notes", "4. Schedule & Pay")
+                        val stepTitles = listOf("1. Channel", "2. Customer", "3. Items", "4. Schedule", "5. Review")
                         stepTitles.forEachIndexed { index, title ->
                             val stepNum = index + 1
                             val isCurrent = currentStep == stepNum
@@ -539,9 +546,13 @@ fun CreateOrderScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
+                            .height(50.dp)
                     ) {
-                        Text("Next: Customer Details ➔", fontWeight = FontWeight.Bold)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Next: Customer Details", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
+                        }
                     }
                 }
             }
@@ -820,20 +831,28 @@ fun CreateOrderScreen(
                             onClick = { currentStep = 1 },
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp)
+                                .weight(0.8f)
+                                .height(50.dp)
                         ) {
-                            Text("⬅ Back", fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Back", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
                         }
                         Button(
                             onClick = { validateStep2AndNext() },
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa),
                             modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp)
+                                .weight(1.2f)
+                                .height(50.dp)
                         ) {
-                            Text("Next: Add Items ➔", fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Next: Add Items", fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                            }
                         }
                     }
                 }
@@ -1068,20 +1087,28 @@ fun CreateOrderScreen(
                             onClick = { currentStep = 2 },
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp)
+                                .weight(0.8f)
+                                .height(50.dp)
                         ) {
-                            Text("⬅ Back", fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Back", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
                         }
                         Button(
                             onClick = { validateStep3AndNext() },
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa),
                             modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp)
+                                .weight(1.2f)
+                                .height(50.dp)
                         ) {
-                            Text("Next: Schedule & Pay ➔", fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Next: Schedule & Pay", fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                            }
                         }
                     }
                 }
@@ -1357,7 +1384,7 @@ fun CreateOrderScreen(
                     }
                 }
 
-                // STEP 4 ACTIONS: SAVE & WHATSAPP
+                // STEP 4 ACTIONS: NEXT TO REVIEW
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -1370,35 +1397,285 @@ fun CreateOrderScreen(
                                 .weight(0.8f)
                                 .height(52.dp)
                         ) {
-                            Text("⬅ Back", fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Back", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
                         }
                         Button(
-                            onClick = { submitOrder(openWhatsAppReceipt = true) },
-                            enabled = cartItems.isNotEmpty(),
-                            colors = ButtonDefaults.buttonColors(containerColor = WhatsAppGreenDark),
+                            onClick = { validateStep4AndNext() },
                             shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryCocoa),
                             modifier = Modifier
                                 .weight(1.2f)
                                 .height(52.dp)
                         ) {
-                            Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Save & WhatsApp", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Next: Review Order", fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    }
+                }
+            }
+
+            // STEP 5: REVIEW & CONFIRM ORDER SUMMARY WIZARD STEP
+            if (currentStep == 5) {
+                // 1. Order Channel & Customer Details Review Card
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "1. Customer & Channel Review",
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa)
+                                )
+                                OrderChannelBadge(sourceName = selectedChannel.name)
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            val finalCustName = if (isNewCustomer) customerName.trim() else selectedExistingCustomer?.name ?: "Customer"
+                            val finalCustPhone = if (isNewCustomer) customerPhone.trim() else selectedExistingCustomer?.phone ?: "N/A"
+                            val finalCustAddress = if (isNewCustomer) customerAddress.trim() else selectedExistingCustomer?.address ?: ""
+
+                            Text(finalCustName, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            Text("Phone: $finalCustPhone", color = TextSecondary, fontSize = 13.sp)
+                            if (finalCustAddress.isNotBlank()) {
+                                Text("Delivery Address: $finalCustAddress", color = TextSecondary, fontSize = 13.sp)
+                            }
+                        }
+                    }
+                }
+
+                // 2. Delivery Date & Time Slot Card
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(
+                                text = "2. Delivery Schedule",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Delivery Date:", color = TextSecondary)
+                                Text(
+                                    Formatters.formatDate(deliveryTimestamp),
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Time Slot:", color = TextSecondary)
+                                Text(deliveryTimeSlot, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+                    }
+                }
+
+                // 3. Ordered Items & Customization Card
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(
+                                text = "3. Ordered Items (${cartItems.size})",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            cartItems.forEach { item ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(item.itemName, fontWeight = FontWeight.Bold)
+                                        Text("${item.variantName} • Qty: ${item.quantity}", color = TextSecondary, fontSize = 12.sp)
+                                    }
+                                    Text("₹${item.itemTotal.toInt()}", fontWeight = FontWeight.Bold, color = PrimaryCocoa)
+                                }
+                            }
+
+                            if (cakeMessage.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = PrimaryCocoa.copy(alpha = 0.05f),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "Cake Message: \"$cakeMessage\"",
+                                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold, color = PrimaryCocoa),
+                                        modifier = Modifier.padding(8.dp)
+                                    )
+                                }
+                            }
+
+                            if (customizationNotes.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Design Notes: $customizationNotes",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // 4. Financial & Payment Summary Card
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(
+                                text = "4. Final Billing & Payment",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = PrimaryCocoa)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Items Subtotal:", color = TextSecondary)
+                                Text(Formatters.formatCurrency(subtotal))
+                            }
+
+                            if (customizationCharge > 0) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Customization Charge:", color = TextSecondary)
+                                    Text("+${Formatters.formatCurrency(customizationCharge)}")
+                                }
+                            }
+
+                            if (discount > 0) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Discount:", color = TextSecondary)
+                                    Text("-${Formatters.formatCurrency(discount)}", color = EgglessGreen)
+                                }
+                            }
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp), color = WarmBorder)
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Total Amount:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Text(Formatters.formatCurrency(totalAmount), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = PrimaryCocoa)
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Advance Paid (${paymentMode.displayName}):", color = AdvancePaidColor)
+                                Text(Formatters.formatCurrency(advancePaid), color = AdvancePaidColor, fontWeight = FontWeight.SemiBold)
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Balance Due on Delivery:", fontWeight = FontWeight.Bold, color = BalanceDueColor)
+                                Text(Formatters.formatCurrency(balanceDue), fontWeight = FontWeight.Bold, color = BalanceDueColor)
+                            }
+                        }
+                    }
+                }
+
+                // STEP 5 FINAL CONFIRMATION ACTIONS
+                item {
+                    Button(
+                        onClick = { submitOrder(openWhatsAppReceipt = true) },
+                        enabled = cartItems.isNotEmpty(),
+                        colors = ButtonDefaults.buttonColors(containerColor = WhatsAppGreenDark),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Confirm & Send WhatsApp Receipt", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                    OutlinedButton(
-                        onClick = { submitOrder(openWhatsAppReceipt = false) },
-                        enabled = cartItems.isNotEmpty(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryCocoa),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text("Save Order Only", fontWeight = FontWeight.Bold)
+                        OutlinedButton(
+                            onClick = { currentStep = 4 },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(0.8f)
+                                .height(48.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Back", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                        }
+
+                        OutlinedButton(
+                            onClick = { submitOrder(openWhatsAppReceipt = false) },
+                            enabled = cartItems.isNotEmpty(),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryCocoa),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(1.2f)
+                                .height(48.dp)
+                        ) {
+                            Text("Save Order Only", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
                     }
                 }
             }

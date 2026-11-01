@@ -10,10 +10,9 @@ enum class OrderSource(val displayName: String, val iconName: String) {
 
 enum class OrderStatus(val displayName: String, val stepIndex: Int) {
     RECEIVED("Received", 0),
-    BAKING("Baking & Preparing", 1),
-    READY("Ready for Pickup", 2),
-    OUT_FOR_DELIVERY("Out for Delivery", 3),
-    DELIVERED("Delivered", 4),
+    BAKING("Preparing / Baking", 1),
+    READY("Ready to Deliver", 2),
+    DELIVERED("Delivered", 3),
     CANCELLED("Cancelled", -1)
 }
 

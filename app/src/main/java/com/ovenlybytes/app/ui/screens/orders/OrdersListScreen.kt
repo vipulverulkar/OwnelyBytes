@@ -221,9 +221,10 @@ fun OrdersListScreen(
                 listOf(
                     "ALL" to "All Status",
                     OrderStatus.RECEIVED.name to "Received",
-                    OrderStatus.BAKING.name to "Baking",
-                    OrderStatus.READY.name to "Ready",
-                    OrderStatus.DELIVERED.name to "Delivered"
+                    OrderStatus.BAKING.name to "Preparing/Baking",
+                    OrderStatus.READY.name to "Ready to Deliver",
+                    OrderStatus.DELIVERED.name to "Delivered",
+                    OrderStatus.CANCELLED.name to "Cancelled"
                 ).forEach { (statusKey, label) ->
                     AssistChip(
                         onClick = { viewModel.onStatusFilterChanged(statusKey) },
