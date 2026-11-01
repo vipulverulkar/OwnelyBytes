@@ -5,6 +5,7 @@ import android.widget.DatePicker
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -424,12 +425,29 @@ fun OrderDetailScreen(
                             Text(Formatters.formatCurrency(order.totalAmount), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = PrimaryCocoa)
                         }
 
+                        Spacer(modifier = Modifier.height(6.dp))
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("Advance Paid:", color = AdvancePaidColor)
                             Text(Formatters.formatCurrency(order.advancePaid), color = AdvancePaidColor, fontWeight = FontWeight.SemiBold)
+                        }
+
+                        val paymentModeEnum = remember(order.paymentMode) {
+                            com.ovenlybytes.app.model.PaymentMode.entries.find {
+                                it.name.equals(order.paymentMode, ignoreCase = true) ||
+                                it.displayName.equals(order.paymentMode, ignoreCase = true)
+                            }
+                        }
+                        val paymentModeDisplay = paymentModeEnum?.displayName ?: order.paymentMode.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Payment Mode:", color = TextSecondary)
+                            Text(paymentModeDisplay, color = TextSecondary, fontWeight = FontWeight.SemiBold)
                         }
 
                         Row(
@@ -779,6 +797,23 @@ fun EditOrderDialog(
                             Text("Balance Due", fontSize = 10.sp, color = TextSecondary)
                             Text(Formatters.formatCurrency(balanceDue), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = BalanceDueColor)
                         }
+                    }
+                }
+
+                // Payment Mode Selector in Edit Dialog
+                Text("Payment Mode", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    PaymentMode.entries.forEach { mode ->
+                        FilterChip(
+                            selected = paymentMode == mode,
+                            onClick = { paymentMode = mode },
+                            label = { Text(mode.displayName, fontSize = 11.sp, fontWeight = if (paymentMode == mode) FontWeight.Bold else FontWeight.Normal) }
+                        )
                     }
                 }
             }

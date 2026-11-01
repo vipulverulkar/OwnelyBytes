@@ -1124,15 +1124,16 @@ fun CreateOrderScreen(
                         Text("Payment Mode", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            PaymentMode.values().forEach { mode ->
+                            PaymentMode.entries.forEach { mode ->
                                 FilterChip(
                                     selected = paymentMode == mode,
                                     onClick = { paymentMode = mode },
-                                    label = { Text(mode.name, fontSize = 11.sp) },
-                                    modifier = Modifier.weight(1f)
+                                    label = { Text(mode.displayName, fontSize = 11.sp, fontWeight = if (paymentMode == mode) FontWeight.Bold else FontWeight.Normal) }
                                 )
                             }
                         }
